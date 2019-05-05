@@ -1,0 +1,2650 @@
+\begin{lstlisting}[language=Python, caption=Invocation Source Code]
+import abjad
+import itertools
+import os
+import pathlib
+import time
+import abjadext.rmakers
+from MusicMaker import MusicMaker
+from AttachmentHandler import AttachmentHandler
+from random import random
+from random import seed
+
+print('Interpreting file ...')
+
+time_signatures = [
+    abjad.TimeSignature(pair) for pair in [
+        (4, 4), (4, 4), (4, 4), (4, 4), (4, 4),
+        (4, 4), (9, 8),
+    ]
+]
+
+bounds = abjad.mathtools.cumulative_sums([_.duration for _ in time_signatures])
+
+def cyc(lst):
+    count = 0
+    while True:
+        yield lst[count%len(lst)]
+        count += 1
+
+def grouper(lst1, lst2):
+    def cyc(lst):
+        c = 0
+        while True:
+            yield lst[c%len(lst)]
+            c += 1
+    lst1 = cyc(lst1)
+    return [next(lst1) if i == 1 else [next(lst1) for _ in range(i)] for i in lst2]
+
+def reduceMod(list_length, rw):
+    return [(x % list_length) for x in rw]
+
+sopranino_note = [27, 17, 8, 0, 11, ]
+soprano_1_note = [22, 16, 13, ]
+soprano_2_note = [16, 13, 14, 13, ]
+soprano_3_note = [13, 12, 13, 16, 26 ]
+alto_1_note = [20, 12, 23, ]
+alto_2_note = [12, 1, 12, 23, ]
+alto_3_note = [1, 23, 1, 12, ]
+alto_4_note = [20, 12, 20, 23, ]
+alto_5_note = [12, 20, 1, 23, ]
+alto_6_note = [1, 20, 12, ]
+tenor_1_note = [17, -1, 25, 6,]
+tenor_2_note = [6, 25, 17,]
+tenor_3_note = [-1, 6, 17, 25, ]
+tenor_4_note = [17, -1, 6, ]
+tenor_5_note = [6, 25, 17, ]
+baritone_1_note = [13, 24, 13, 6, ]
+baritone_2_note = [6, 24, 13, 4, ]
+baritone_3_note = [4, 13, 6, 24, ]
+bass_1_note = [9, 11, 11, 9, 11, ]
+bass_2_note = [11, 9, 9, 11, 9, ]
+contrabass_note = [-2, 2, 7, -2, 2, 7, 2, -2, ]
+
+# -3 at bottom of chord for completion
+sopranino_chord = [17, 27, 11, 0, 8,]
+soprano_1_chord = [22, [13.25, 16, 26.25, ], 16, [13.25, 16, 26.25, ], 13, [13.25, 16, 26.25, ], ]
+soprano_2_chord = [16, [13, 14.75, 26.25, ], 13, [13, 14.75, 26.25, ], 14, [13, 14.75, 26.25, ], 13, [13, 14.75, 26.25, ], ] #maybe it's 13.25?
+soprano_3_chord = [13, [12.75, 15.5, 26, ], 13, 12, [12.75, 15.5, 26, ], 16, [12.75, 15.5, 26, ], 26 ]
+alto_1_chord = [20, [12.5, 19, 27.75, 34, ], 12, [12.5, 19, 27.75, 34, ], 23, ]
+alto_2_chord = [12, [12.5, 15.25, 25.5, ], 1, [12.5, 15.25, 25.5, ], 12, [12.5, 15.25, 25.5, ], 23, ]
+alto_3_chord = [1, [1.75, 13.5, 22.25, 27, 30, ], 23, [1.75, 13.5, 22.25, 27, 30, ], 1, [1.75, 13.5, 22.25, 27, 30, ], 12, [1.75, 13.5, 22.25, 27, 30, ], ]
+alto_4_chord = [20, [12.5, 15.25, 25.5, ], 12, [12.5, 15.25, 25.5, ], 20, [12.5, 15.25, 25.5, ], 23, ]
+alto_5_chord = [12, [1.75, 13.5, 22.25, 27, 30, ], 20, 1, [1.75, 13.5, 22.25, 27, 30, ], 23, [1.75, 13.5, 22.25, 27, 30, ], ]
+alto_6_chord = [1, [12.5, 19, 27.75, 34, ], 20, 12, [12.5, 19, 27.75, 34, ], ]
+tenor_1_chord = [17, [6, 17.5, ], -1, 25, [6, 17.5, ], 6, [6, 17.5, ],]
+tenor_2_chord = [6, [6, 17.5, 25.5, 30, ], 25, [6, 17.5, 25.5, 30, ], 17,]
+tenor_3_chord = [-1, [6, 17.5, 25.5, 30.75, ], 6, [6, 17.5, 25.5, 30.75, ], 17, [6, 17.5, 25.5, 30.75, ], 25, [6, 17.5, 25.5, 30.75, ], ]
+tenor_4_chord = [17, [6, 17.5, ], -1, [6, 17.5, ], 6, [6, 17.5, ],]
+tenor_5_chord = [6, [6, 17.5, 25.5, 30.75, ], 25, [6, 17.5, 25.5, 30.75, ], 17, [6, 17.5, 25.5, 30.75, ], ]
+baritone_1_chord = [13, [13.25, 27.5, 33.75, ], 24, [13.25, 27.5, 33.75, ], 13, [13.25, 27.5, 33.75, ], 6, [13.25, 27.5, 33.75, ],]
+baritone_2_chord = [6, [4, 16.5, 23.5, ], 24, 13, [4, 16.5, 23.5, ], 4, ]
+baritone_3_chord = [4, [7.75, 17.75, 25.5, 34, ], 13, [7.75, 17.75, 25.5, 34, ], 6, [7.75, 17.75, 25.5, 34, ], 24, [7.75, 17.75, 25.5, 34, ], ]
+bass_1_chord = [11, 18, 9, 11, 0, ]
+bass_2_chord = [9, 11, 0, 11, 9, 18, ]
+contrabass_chord = [-2, 7, 2, 16, 7, 18, 16, 25, 16, ]
+
+def reduceMod(x, rw):
+    return [(y % x) for y in rw]
+
+seed(22)
+sopranino_random_walk = []
+sopranino_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = sopranino_random_walk[i-1] + movement
+    sopranino_random_walk.append(value)
+    sopranino_walk_chord = [18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, ]
+l = len(sopranino_walk_chord)
+sopranino_random_walk_notes = [sopranino_walk_chord[x] for x in reduceMod(l, sopranino_random_walk)]
+
+seed(23)
+soprano_1_random_walk = []
+soprano_1_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = soprano_1_random_walk[i-1] + movement
+    soprano_1_random_walk.append(value)
+soprano_1_walk_chord = [17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, ]
+l = len(soprano_1_walk_chord)
+soprano_1_random_walk_notes = [soprano_1_walk_chord[x] for x in reduceMod(l, soprano_1_random_walk)]
+
+seed(24)
+soprano_2_random_walk = []
+soprano_2_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = soprano_2_random_walk[i-1] + movement
+    soprano_2_random_walk.append(value)
+soprano_2_random_walk.append(value)
+soprano_2_walk_chord = [16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, ]
+l = len(soprano_2_walk_chord)
+soprano_2_random_walk_notes = [soprano_2_walk_chord[x] for x in reduceMod(l, soprano_2_random_walk)]
+
+seed(25)
+soprano_3_random_walk = []
+soprano_3_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = soprano_3_random_walk[i-1] + movement
+    soprano_3_random_walk.append(value)
+soprano_3_random_walk.append(value)
+soprano_3_walk_chord = [15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ]
+l = len(soprano_3_walk_chord)
+soprano_3_random_walk_notes = [soprano_3_walk_chord[x] for x in reduceMod(l, soprano_3_random_walk)]
+
+seed(26)
+alto_1_random_walk = []
+alto_1_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = alto_1_random_walk[i-1] + movement
+    alto_1_random_walk.append(value)
+alto_1_walk_chord = [14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, ]
+l = len(alto_1_walk_chord)
+alto_1_random_walk_notes = [alto_1_walk_chord[x] for x in reduceMod(l, alto_1_random_walk)]
+
+seed(27)
+alto_2_random_walk = []
+alto_2_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = alto_2_random_walk[i-1] + movement
+    alto_2_random_walk.append(value)
+alto_2_walk_chord = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, ]
+l = len(alto_2_walk_chord)
+alto_2_random_walk_notes = [alto_2_walk_chord[x] for x in reduceMod(l, alto_2_random_walk)]
+
+seed(28)
+alto_3_random_walk = []
+alto_3_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = alto_3_random_walk[i-1] + movement
+    alto_3_random_walk.append(value)
+alto_3_walk_chord = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ]
+l = len(alto_3_walk_chord)
+alto_3_random_walk_notes = [alto_3_walk_chord[x] for x in reduceMod(l, alto_3_random_walk)]
+
+seed(29)
+alto_4_random_walk = []
+alto_4_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = alto_4_random_walk[i-1] + movement
+    alto_4_random_walk.append(value)
+alto_4_walk_chord = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ]
+l = len(alto_4_walk_chord)
+alto_4_random_walk_notes = [alto_4_walk_chord[x] for x in reduceMod(l, alto_4_random_walk)]
+
+seed(30)
+alto_5_random_walk = []
+alto_5_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = alto_5_random_walk[i-1] + movement
+    alto_5_random_walk.append(value)
+alto_5_walk_chord = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ]
+l = len(alto_5_walk_chord)
+alto_5_random_walk_notes = [alto_5_walk_chord[x] for x in reduceMod(l, alto_5_random_walk)]
+
+seed(31)
+alto_6_random_walk = []
+alto_6_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = alto_6_random_walk[i-1] + movement
+    alto_6_random_walk.append(value)
+alto_6_walk_chord = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, ]
+l = len(alto_6_walk_chord)
+alto_6_random_walk_notes = [alto_6_walk_chord[x] for x in reduceMod(l, alto_6_random_walk)]
+
+seed(32)
+tenor_1_random_walk = []
+tenor_1_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = tenor_1_random_walk[i-1] + movement
+    tenor_1_random_walk.append(value)
+tenor_1_walk_chord = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, ]
+l = len(tenor_1_walk_chord)
+tenor_1_random_walk_notes = [tenor_1_walk_chord[x] for x in reduceMod(l, tenor_1_random_walk)]
+
+seed(33)
+tenor_2_random_walk = []
+tenor_2_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = tenor_2_random_walk[i-1] + movement
+    tenor_2_random_walk.append(value)
+tenor_2_walk_chord = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, 6, ]
+l = len(tenor_2_walk_chord)
+tenor_2_random_walk_notes = [tenor_2_walk_chord[x] for x in reduceMod(l, tenor_2_random_walk)]
+
+seed(34)
+tenor_3_random_walk = []
+tenor_3_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = tenor_3_random_walk[i-1] + movement
+    tenor_3_random_walk.append(value)
+tenor_3_walk_chord = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, 5, ]
+l = len(tenor_3_walk_chord)
+tenor_3_random_walk_notes = [tenor_3_walk_chord[x] for x in reduceMod(l, tenor_3_random_walk)]
+
+seed(35)
+tenor_4_random_walk = []
+tenor_4_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = tenor_4_random_walk[i-1] + movement
+    tenor_4_random_walk.append(value)
+tenor_4_walk_chord = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, 4, ]
+l = len(tenor_4_walk_chord)
+tenor_4_random_walk_notes = [tenor_4_walk_chord[x] for x in reduceMod(l, tenor_4_random_walk)]
+
+seed(36)
+tenor_5_random_walk = []
+tenor_5_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = tenor_5_random_walk[i-1] + movement
+    tenor_5_random_walk.append(value)
+tenor_5_walk_chord = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, 3, ]
+l = len(tenor_5_walk_chord)
+tenor_5_random_walk_notes = [tenor_5_walk_chord[x] for x in reduceMod(l, tenor_5_random_walk)]
+
+seed(37)
+baritone_1_random_walk = []
+baritone_1_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = baritone_1_random_walk[i-1] + movement
+    baritone_1_random_walk.append(value)
+baritone_1_walk_chord = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, 2, ]
+l = len(baritone_1_walk_chord)
+baritone_1_random_walk_notes = [baritone_1_walk_chord[x] for x in reduceMod(l, baritone_1_random_walk)]
+
+seed(38)
+baritone_2_random_walk = []
+baritone_2_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = baritone_2_random_walk[i-1] + movement
+    baritone_2_random_walk.append(value)
+baritone_2_walk_chord = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, 1, ]
+l = len(baritone_2_walk_chord)
+baritone_2_random_walk_notes = [baritone_2_walk_chord[x] for x in reduceMod(l, baritone_2_random_walk)]
+
+seed(39)
+baritone_3_random_walk = []
+baritone_3_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = baritone_3_random_walk[i-1] + movement
+    baritone_3_random_walk.append(value)
+baritone_3_walk_chord = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, 0, ]
+l = len(baritone_3_walk_chord)
+baritone_3_random_walk_notes = [baritone_3_walk_chord[x] for x in reduceMod(l, baritone_3_random_walk)]
+
+seed(40)
+bass_1_random_walk = []
+bass_1_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = bass_1_random_walk[i-1] + movement
+    bass_1_random_walk.append(value)
+bass_1_walk_chord = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -1, ]
+l = len(bass_1_walk_chord)
+bass_1_random_walk_notes = [bass_1_walk_chord[x] for x in reduceMod(l, bass_1_random_walk)]
+
+seed(41)
+bass_2_random_walk = []
+bass_2_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = bass_2_random_walk[i-1] + movement
+    bass_2_random_walk.append(value)
+bass_2_walk_chord = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, ]
+l = len(bass_2_walk_chord)
+bass_2_random_walk_notes = [bass_2_walk_chord[x] for x in reduceMod(l, bass_2_random_walk)]
+
+seed(42)
+contrabass_random_walk = []
+contrabass_random_walk.append(-1 if random() < 0.5 else 1)
+for i in range(1, 1000):
+    movement = -1 if random() < 0.5 else 1
+    value = contrabass_random_walk[i-1] + movement
+    contrabass_random_walk.append(value)
+contrabass_walk_chord = [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, ]
+l = len(contrabass_walk_chord)
+contrabass_random_walk_notes = [contrabass_walk_chord[x] for x in reduceMod(l, contrabass_random_walk)]
+
+rmaker_one = abjadext.rmakers.TaleaRhythmMaker(
+    talea=abjadext.rmakers.Talea(
+        counts=[3, 2, 5, 2, 3, 1, 3, 2, 3, 1, 2, ],
+        denominator=8,
+        ),
+    beam_specifier=abjadext.rmakers.BeamSpecifier(
+        beam_divisions_together=True,
+        beam_rests=False,
+        ),
+    extra_counts_per_division=[1, 0, -1, 1, -1, 0, 1, ],
+    logical_tie_masks=[
+        abjadext.rmakers.silence([3], 4),
+        ],
+    tuplet_specifier=abjadext.rmakers.TupletSpecifier(
+        trivialize=True,
+        extract_trivial=True,
+        rewrite_rest_filled=True,
+        rewrite_sustained=True,
+        ),
+    )
+
+rmaker_two = abjadext.rmakers.TaleaRhythmMaker(
+    talea=abjadext.rmakers.Talea(
+        counts=[1, 1, 3, 1, 5, 5, 3, 1, 1, 3, 1, 3, 3, 1, 3, 7, 1, 6, 1, 3, ],
+        denominator=8,
+        ),
+    beam_specifier=abjadext.rmakers.BeamSpecifier(
+        beam_divisions_together=True,
+        beam_rests=False,
+        ),
+    extra_counts_per_division=[-1, 0, 1, -1, 1, 0, ],
+    logical_tie_masks=[
+        abjadext.rmakers.silence([4, 8, ], 9),
+        ],
+    tuplet_specifier=abjadext.rmakers.TupletSpecifier(
+        trivialize=True,
+        extract_trivial=True,
+        rewrite_rest_filled=True,
+        rewrite_sustained=True,
+        ),
+    )
+
+attachment_handler_one = AttachmentHandler(
+    starting_dynamic='f',
+    ending_dynamic='ff',
+    hairpin='<',
+    # articulation_list=['accent', '', 'tenuto', '', '', 'portato', '', '', '', ],
+)
+
+attachment_handler_two = AttachmentHandler(
+    starting_dynamic='p',
+    ending_dynamic='mp',
+    hairpin='<',
+    articulation_list=['flageolet', 'flageolet', 'flageolet', 'flageolet', 'flageolet', 'halfopen', 'halfopen', 'halfopen', 'flageolet', 'stopped', 'stopped', 'stopped', 'stopped', 'halfopen', 'flageolet', 'halfopen', 'halfopen', 'halfopen', 'stopped', 'stopped', 'stopped', ],
+)
+
+attachment_handler_three = AttachmentHandler(
+    starting_dynamic='mf',
+    ending_dynamic='mp',
+    hairpin='>',
+)
+
+#####sopranino#####
+sopranino_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=sopranino_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+sopranino_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=sopranino_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+sopranino_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=sopranino_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####soprano_one#####
+soprano_one_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_1_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+soprano_one_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_1_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+soprano_one_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_1_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####soprano_two#####
+soprano_two_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_2_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+soprano_two_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_2_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+soprano_two_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_2_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####soprano_three#####
+soprano_three_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_3_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+soprano_three_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_3_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+soprano_three_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=soprano_3_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####alto_one#####
+alto_one_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_1_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+alto_one_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_1_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+alto_one_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_1_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####alto_two#####
+alto_two_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_2_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+alto_two_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_2_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+alto_two_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_2_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####alto_three#####
+alto_three_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_3_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+alto_three_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_3_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+alto_three_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_3_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####alto_four#####
+alto_four_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_4_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+alto_four_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_4_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+alto_four_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_4_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####alto_five#####
+alto_five_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_5_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+alto_five_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_5_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+alto_five_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_5_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####alto_six#####
+alto_six_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_6_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+alto_six_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_6_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+alto_six_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=alto_6_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####tenor_one#####
+tenor_one_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_1_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+tenor_one_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_1_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+tenor_one_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_1_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####tenor_two#####
+tenor_two_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_2_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+tenor_two_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_2_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+tenor_two_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_2_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####tenor_three#####
+tenor_three_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_3_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+tenor_three_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_3_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+tenor_three_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_3_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####tenor_four#####
+tenor_four_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_4_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+tenor_four_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_4_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+tenor_four_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_4_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####tenor_five#####
+tenor_five_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_5_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+tenor_five_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_5_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+tenor_five_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=tenor_5_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####baritone_one#####
+baritone_one_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_1_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+baritone_one_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_1_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+baritone_one_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_1_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####baritone_two#####
+baritone_two_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_2_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+baritone_two_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_2_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+baritone_two_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_2_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####baritone_three#####
+baritone_three_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_3_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+baritone_three_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_3_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+baritone_three_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=baritone_3_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####bass_one#####
+bass_one_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=bass_1_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+bass_one_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=bass_1_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+bass_one_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=bass_1_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####bass_two#####
+bass_two_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=bass_2_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+bass_two_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=bass_2_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+bass_two_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=bass_2_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+#####contrabass#####
+contrabass_musicmaker_one = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=contrabass_chord,
+    continuous=True,
+    attachment_handler=attachment_handler_one,
+)
+contrabass_musicmaker_two = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=contrabass_random_walk_notes,
+    continuous=True,
+    attachment_handler=attachment_handler_two,
+)
+contrabass_musicmaker_three = MusicMaker(
+    rmaker=rmaker_two,
+    pitches=contrabass_note,
+    continuous=True,
+    attachment_handler=attachment_handler_three,
+)
+
+silence_maker = abjadext.rmakers.NoteRhythmMaker(
+    division_masks=[
+        abjadext.rmakers.SilenceMask(
+            pattern=abjad.index([0], 1),
+            ),
+        ],
+    )
+
+class MusicSpecifier:
+
+    def __init__(self, music_maker, voice_name):
+        self.music_maker = music_maker
+        self.voice_name = voice_name
+
+print('Collecting timespans and rmakers ...')
+
+voice_1_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 1',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), sopranino_musicmaker_two],
+        [(2, 8), (4, 8), sopranino_musicmaker_one],
+        [(4, 8), (6, 8), sopranino_musicmaker_two],
+        [(6, 8), (8, 8), sopranino_musicmaker_two],
+
+        [(10, 8), (12, 8), sopranino_musicmaker_two],
+        [(12, 8), (14, 8), sopranino_musicmaker_two],
+        [(14, 8), (16, 8), sopranino_musicmaker_two],
+        [(16, 8), (18, 8), sopranino_musicmaker_one],
+        [(18, 8), (20, 8), sopranino_musicmaker_two],
+        [(20, 8), (22, 8), sopranino_musicmaker_two],
+        [(22, 8), (24, 8), sopranino_musicmaker_two],
+
+        [(26, 8), (28, 8), sopranino_musicmaker_one],
+        [(28, 8), (30, 8), sopranino_musicmaker_two],
+        [(30, 8), (32, 8), sopranino_musicmaker_two],
+        [(32, 8), (34, 8), sopranino_musicmaker_two],
+        [(34, 8), (36, 8), sopranino_musicmaker_three],
+        [(36, 8), (38, 8), sopranino_musicmaker_three],
+        [(38, 8), (40, 8), sopranino_musicmaker_one],
+        [(40, 8), (42, 8), sopranino_musicmaker_two],
+        [(42, 8), (44, 8), sopranino_musicmaker_two],
+        [(44, 8), (46, 8), sopranino_musicmaker_two],
+        [(46, 8), (48, 8), sopranino_musicmaker_one],
+        [(48, 8), (50, 8), sopranino_musicmaker_three],
+
+        [(52, 8), (54, 8), sopranino_musicmaker_two],
+        [(54, 8), (56, 8), sopranino_musicmaker_two],
+        [(56, 8), (57, 8), silence_maker],
+    ]
+])
+
+voice_2_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 2',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), soprano_one_musicmaker_two],
+        [(2, 8), (4, 8), soprano_one_musicmaker_three],
+        [(4, 8), (6, 8), soprano_one_musicmaker_two],
+
+        [(8, 8), (10, 8), soprano_one_musicmaker_three],
+        [(10, 8), (12, 8), soprano_one_musicmaker_two],
+        [(12, 8), (14, 8), soprano_one_musicmaker_two],
+        [(14, 8), (16, 8), soprano_one_musicmaker_one],
+        [(16, 8), (18, 8), soprano_one_musicmaker_three],
+        [(18, 8), (20, 8), soprano_one_musicmaker_one],
+
+        [(22, 8), (24, 8), soprano_one_musicmaker_one],
+        [(24, 8), (26, 8), soprano_one_musicmaker_one],
+        [(26, 8), (28, 8), soprano_one_musicmaker_three],
+        [(28, 8), (30, 8), soprano_one_musicmaker_two],
+        [(30, 8), (32, 8), soprano_one_musicmaker_two],
+        [(32, 8), (34, 8), soprano_one_musicmaker_two],
+        [(34, 8), (36, 8), soprano_one_musicmaker_two],
+        [(36, 8), (38, 8), soprano_one_musicmaker_three],
+
+        [(40, 8), (42, 8), soprano_one_musicmaker_one],
+        [(42, 8), (44, 8), soprano_one_musicmaker_one],
+
+        [(46, 8), (48, 8), soprano_one_musicmaker_one],
+        [(48, 8), (50, 8), soprano_one_musicmaker_two],
+        [(50, 8), (52, 8), soprano_one_musicmaker_three],
+        [(52, 8), (54, 8), soprano_one_musicmaker_two],
+        [(54, 8), (56, 8), soprano_one_musicmaker_one],
+    ]
+])
+
+voice_3_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 3',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), soprano_two_musicmaker_one],
+        [(2, 8), (4, 8), soprano_two_musicmaker_one],
+        [(4, 8), (6, 8), soprano_two_musicmaker_one],
+        [(6, 8), (8, 8), soprano_two_musicmaker_one],
+        [(8, 8), (10, 8), soprano_two_musicmaker_one],
+        [(10, 8), (12, 8), soprano_two_musicmaker_three],
+        [(12, 8), (14, 8), soprano_two_musicmaker_one],
+        [(14, 8), (16, 8), soprano_two_musicmaker_one],
+        [(16, 8), (18, 8), soprano_two_musicmaker_two],
+
+        [(20, 8), (22, 8), soprano_two_musicmaker_two],
+        [(22, 8), (24, 8), soprano_two_musicmaker_three],
+        [(24, 8), (26, 8), soprano_two_musicmaker_two],
+        [(26, 8), (28, 8), soprano_two_musicmaker_two],
+        [(28, 8), (30, 8), soprano_two_musicmaker_two],
+        [(30, 8), (32, 8), soprano_two_musicmaker_one],
+        [(32, 8), (34, 8), soprano_two_musicmaker_one],
+        [(34, 8), (36, 8), soprano_two_musicmaker_one],
+        [(36, 8), (38, 8), soprano_two_musicmaker_three],
+        [(38, 8), (40, 8), soprano_two_musicmaker_one],
+        [(40, 8), (42, 8), soprano_two_musicmaker_one],
+        [(42, 8), (44, 8), soprano_two_musicmaker_two],
+        [(44, 8), (46, 8), soprano_two_musicmaker_three],
+        [(46, 8), (48, 8), soprano_two_musicmaker_two],
+        [(48, 8), (50, 8), soprano_two_musicmaker_two],
+        [(50, 8), (52, 8), soprano_two_musicmaker_one],
+    ]
+])
+
+voice_4_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 4',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), soprano_three_musicmaker_two],
+        [(2, 8), (4, 8), soprano_three_musicmaker_two],
+        [(4, 8), (6, 8), soprano_three_musicmaker_two],
+        [(6, 8), (8, 8), soprano_three_musicmaker_three],
+        [(8, 8), (10, 8), soprano_three_musicmaker_one],
+        [(10, 8), (12, 8), soprano_three_musicmaker_one],
+        [(12, 8), (14, 8), soprano_three_musicmaker_one],
+        [(14, 8), (16, 8), soprano_three_musicmaker_three],
+        [(16, 8), (18, 8), soprano_three_musicmaker_two],
+
+        [(20, 8), (22, 8), soprano_three_musicmaker_two],
+        [(22, 8), (24, 8), soprano_three_musicmaker_three],
+        [(24, 8), (26, 8), soprano_three_musicmaker_two],
+        [(26, 8), (28, 8), soprano_three_musicmaker_two],
+        [(28, 8), (30, 8), soprano_three_musicmaker_two],
+        [(30, 8), (32, 8), soprano_three_musicmaker_three],
+        [(32, 8), (34, 8), soprano_three_musicmaker_one],
+        [(34, 8), (36, 8), soprano_three_musicmaker_one],
+        [(36, 8), (38, 8), soprano_three_musicmaker_one],
+        [(39, 8), (40, 8), soprano_three_musicmaker_three],
+
+        [(42, 8), (44, 8), soprano_three_musicmaker_one],
+        [(44, 8), (46, 8), soprano_three_musicmaker_two],
+        [(46, 8), (48, 8), soprano_three_musicmaker_three],
+        [(48, 8), (50, 8), soprano_three_musicmaker_two],
+        [(50, 8), (52, 8), soprano_three_musicmaker_two],
+        [(52, 8), (54, 8), soprano_three_musicmaker_two],
+        [(54, 8), (56, 8), soprano_three_musicmaker_three],
+    ]
+])
+
+voice_5_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 5',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), alto_one_musicmaker_one],
+        [(2, 8), (4, 8), alto_one_musicmaker_one],
+        [(4, 8), (6, 8), alto_one_musicmaker_two],
+        [(6, 8), (8, 8), alto_one_musicmaker_two],
+        [(8, 8), (10, 8), alto_one_musicmaker_three],
+
+        [(12, 8), (14, 8), alto_one_musicmaker_two],
+        [(14, 8), (16, 8), alto_one_musicmaker_one],
+        [(16, 8), (18, 8), alto_one_musicmaker_one],
+        [(18, 8), (20, 8), alto_one_musicmaker_three],
+
+        [(22, 8), (24, 8), alto_one_musicmaker_one],
+        [(24, 8), (26, 8), alto_one_musicmaker_two],
+        [(26, 8), (28, 8), alto_one_musicmaker_two],
+        [(28, 8), (30, 8), alto_one_musicmaker_three],
+        [(30, 8), (32, 8), alto_one_musicmaker_two],
+        [(32, 8), (34, 8), alto_one_musicmaker_two],
+        [(34, 8), (36, 8), alto_one_musicmaker_one],
+
+        [(38, 8), (40, 8), alto_one_musicmaker_three],
+        [(40, 8), (42, 8), alto_one_musicmaker_one],
+        [(42, 8), (44, 8), alto_one_musicmaker_one],
+        [(44, 8), (46, 8), alto_one_musicmaker_two],
+        [(46, 8), (48, 8), alto_one_musicmaker_two],
+        [(48, 8), (50, 8), alto_one_musicmaker_three],
+        [(50, 8), (52, 8), alto_one_musicmaker_two],
+
+        [(54, 8), (56, 8), alto_one_musicmaker_one],
+    ]
+])
+
+voice_6_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 6',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), alto_two_musicmaker_one],
+        [(2, 8), (4, 8), alto_two_musicmaker_one],
+        [(4, 8), (6, 8), alto_two_musicmaker_one],
+        [(6, 8), (8, 8), alto_two_musicmaker_one],
+        [(8, 8), (10, 8), alto_two_musicmaker_two],
+        [(10, 8), (12, 8), alto_two_musicmaker_three],
+
+        [(14, 8), (16, 8), alto_two_musicmaker_two],
+        [(16, 8), (18, 8), alto_two_musicmaker_two],
+        [(18, 8), (20, 8), alto_two_musicmaker_two],
+        [(20, 8), (22, 8), alto_two_musicmaker_one],
+        [(22, 8), (24, 8), alto_two_musicmaker_three],
+        [(24, 8), (26, 8), alto_two_musicmaker_one],
+
+        [(28, 8), (30, 8), alto_two_musicmaker_one],
+        [(30, 8), (32, 8), alto_two_musicmaker_two],
+        [(32, 8), (34, 8), alto_two_musicmaker_two],
+        [(34, 8), (36, 8), alto_two_musicmaker_three],
+        [(36, 8), (38, 8), alto_two_musicmaker_two],
+        [(38, 8), (40, 8), alto_two_musicmaker_one],
+        [(40, 8), (42, 8), alto_two_musicmaker_one],
+        [(42, 8), (44, 8), alto_two_musicmaker_one],
+        [(44, 8), (46, 8), alto_two_musicmaker_two],
+        [(46, 8), (48, 8), alto_two_musicmaker_three],
+        [(48, 8), (50, 8), alto_two_musicmaker_one],
+        [(50, 8), (52, 8), alto_two_musicmaker_two],
+        [(52, 8), (54, 8), alto_two_musicmaker_one],
+    ]
+])
+
+voice_7_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 7',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), alto_three_musicmaker_two],
+
+        [(4, 8), (6, 8), alto_three_musicmaker_two],
+        [(6, 8), (8, 8), alto_three_musicmaker_two],
+        [(8, 8), (10, 8), alto_three_musicmaker_two],
+
+        [(12, 8), (14, 8), alto_three_musicmaker_two],
+        [(14, 8), (16, 8), alto_three_musicmaker_one],
+        [(16, 8), (18, 8), alto_three_musicmaker_three],
+        [(18, 8), (20, 8), alto_three_musicmaker_one],
+
+        [(22, 8), (24, 8), alto_three_musicmaker_two],
+        [(24, 8), (26, 8), alto_three_musicmaker_two],
+        [(26, 8), (28, 8), alto_three_musicmaker_two],
+
+        [(32, 8), (34, 8), alto_three_musicmaker_one],
+        [(34, 8), (36, 8), alto_three_musicmaker_three],
+        [(36, 8), (38, 8), alto_three_musicmaker_one],
+        [(38, 8), (40, 8), alto_three_musicmaker_one],
+        [(40, 8), (42, 8), alto_three_musicmaker_one],
+
+        [(44, 8), (46, 8), alto_three_musicmaker_two],
+        [(46, 8), (48, 8), alto_three_musicmaker_two],
+        [(48, 8), (50, 8), alto_three_musicmaker_two],
+        [(50, 8), (52, 8), alto_three_musicmaker_two],
+        [(52, 8), (54, 8), alto_three_musicmaker_three],
+    ]
+])
+
+voice_8_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 8',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), alto_four_musicmaker_two],
+        [(2, 8), (4, 8), alto_four_musicmaker_two],
+        [(4, 8), (6, 8), alto_four_musicmaker_two],
+        [(6, 8), (8, 8), alto_four_musicmaker_one],
+        [(8, 8), (10, 8), alto_four_musicmaker_one],
+        [(10, 8), (12, 8), alto_four_musicmaker_one],
+        [(12, 8), (14, 8), alto_four_musicmaker_two],
+
+        [(16, 8), (18, 8), alto_four_musicmaker_two],
+        [(18, 8), (20, 8), alto_four_musicmaker_one],
+        [(20, 8), (22, 8), alto_four_musicmaker_three],
+        [(22, 8), (24, 8), alto_four_musicmaker_one],
+        [(24, 8), (26, 8), alto_four_musicmaker_one],
+        [(26, 8), (28, 8), alto_four_musicmaker_two],
+        [(28, 8), (30, 8), alto_four_musicmaker_two],
+
+        [(32, 8), (34, 8), alto_four_musicmaker_two],
+        [(34, 8), (36, 8), alto_four_musicmaker_one],
+        [(36, 8), (38, 8), alto_four_musicmaker_one],
+        [(38, 8), (39, 8), alto_four_musicmaker_one],
+        [(40, 8), (42, 8), alto_four_musicmaker_one],
+        [(42, 8), (44, 8), alto_four_musicmaker_three],
+        [(44, 8), (46, 8), alto_four_musicmaker_two],
+
+        [(48, 8), (50, 8), alto_four_musicmaker_two],
+        [(50, 8), (52, 8), alto_four_musicmaker_two],
+        [(52, 8), (54, 8), alto_four_musicmaker_two],
+        [(54, 8), (56, 8), alto_four_musicmaker_one],
+    ]
+])
+
+voice_9_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 9',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), alto_five_musicmaker_two],
+        [(2, 8), (4, 8), alto_five_musicmaker_one],
+        [(4, 8), (6, 8), alto_five_musicmaker_one],
+        [(6, 8), (8, 8), alto_five_musicmaker_two],
+        [(8, 8), (10, 8), alto_five_musicmaker_three],
+
+        [(12, 8), (14, 8), alto_five_musicmaker_one],
+        [(14, 8), (16, 8), alto_five_musicmaker_one],
+        [(16, 8), (18, 8), alto_five_musicmaker_one],
+        [(18, 8), (20, 8), alto_five_musicmaker_one],
+        [(20, 8), (22, 8), alto_five_musicmaker_three],
+        [(22, 8), (24, 8), alto_five_musicmaker_two],
+        [(24, 8), (26, 8), alto_five_musicmaker_two],
+
+        [(28, 8), (30, 8), alto_five_musicmaker_two],
+        [(30, 8), (32, 8), alto_five_musicmaker_three],
+        [(32, 8), (34, 8), alto_five_musicmaker_one],
+        [(34, 8), (36, 8), alto_five_musicmaker_one],
+        [(36, 8), (38, 8), alto_five_musicmaker_one],
+        [(38, 8), (40, 8), alto_five_musicmaker_three],
+        [(40, 8), (42, 8), alto_five_musicmaker_one],
+        [(42, 8), (44, 8), alto_five_musicmaker_two],
+        [(44, 8), (46, 8), alto_five_musicmaker_two],
+
+        [(48, 8), (50, 8), alto_five_musicmaker_three],
+        [(50, 8), (52, 8), alto_five_musicmaker_two],
+        [(52, 8), (54, 8), alto_five_musicmaker_two],
+        [(54, 8), (56, 8), alto_five_musicmaker_two],
+    ]
+])
+
+voice_10_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 10',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), alto_six_musicmaker_one],
+
+        [(4, 8), (6, 8), alto_six_musicmaker_three],
+        [(6, 8), (8, 8), alto_six_musicmaker_one],
+        [(8, 8), (10, 8), alto_six_musicmaker_two],
+        [(10, 8), (12, 8), alto_six_musicmaker_three],
+        [(12, 8), (14, 8), alto_six_musicmaker_two],
+        [(14, 8), (16, 8), alto_six_musicmaker_two],
+        [(16, 8), (18, 8), alto_six_musicmaker_one],
+
+        [(20, 8), (22, 8), alto_six_musicmaker_one],
+        [(22, 8), (24, 8), alto_six_musicmaker_one],
+        [(24, 8), (26, 8), alto_six_musicmaker_one],
+        [(26, 8), (28, 8), alto_six_musicmaker_three],
+        [(28, 8), (30, 8), alto_six_musicmaker_two],
+        [(30, 8), (32, 8), alto_six_musicmaker_two],
+        [(32, 8), (34, 8), alto_six_musicmaker_two],
+        [(34, 8), (36, 8), alto_six_musicmaker_two],
+        [(36, 8), (38, 8), alto_six_musicmaker_three],
+        [(38, 8), (40, 8), alto_six_musicmaker_one],
+        [(40, 8), (42, 8), alto_six_musicmaker_one],
+        [(42, 8), (44, 8), alto_six_musicmaker_one],
+        [(44, 8), (46, 8), alto_six_musicmaker_one],
+        [(46, 8), (48, 8), alto_six_musicmaker_three],
+        [(48, 8), (50, 8), alto_six_musicmaker_one],
+
+        [(52, 8), (54, 8), alto_six_musicmaker_two],
+        [(54, 8), (56, 8), alto_six_musicmaker_two],
+    ]
+])
+
+voice_11_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 11',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), tenor_one_musicmaker_one],
+        [(2, 8), (4, 8), tenor_one_musicmaker_one],
+        [(4, 8), (6, 8), tenor_one_musicmaker_two],
+        [(6, 8), (8, 8), tenor_one_musicmaker_two],
+        [(8, 8), (10, 8), tenor_one_musicmaker_three],
+        [(10, 8), (12, 8), tenor_one_musicmaker_one],
+        [(12, 8), (14, 8), tenor_one_musicmaker_one],
+
+        [(16, 8), (18, 8), tenor_one_musicmaker_one],
+        [(18, 8), (20, 8), tenor_one_musicmaker_two],
+        [(20, 8), (22, 8), tenor_one_musicmaker_two],
+        [(22, 8), (24, 8), tenor_one_musicmaker_three],
+        [(24, 8), (26, 8), tenor_one_musicmaker_two],
+        [(26, 8), (28, 8), tenor_one_musicmaker_one],
+        [(28, 8), (30, 8), tenor_one_musicmaker_one],
+        [(30, 8), (32, 8), tenor_one_musicmaker_one],
+        [(32, 8), (34, 8), tenor_one_musicmaker_one],
+        [(34, 8), (36, 8), tenor_one_musicmaker_one],
+        [(36, 8), (38, 8), tenor_one_musicmaker_two],
+
+        [(40, 8), (42, 8), tenor_one_musicmaker_three],
+        [(42, 8), (44, 8), tenor_one_musicmaker_two],
+        [(44, 8), (46, 8), tenor_one_musicmaker_one],
+        [(46, 8), (48, 8), tenor_one_musicmaker_one],
+        [(48, 8), (50, 8), tenor_one_musicmaker_one],
+        [(50, 8), (52, 8), tenor_one_musicmaker_one],
+        [(52, 8), (54, 8), tenor_one_musicmaker_two],
+        [(54, 8), (56, 8), tenor_one_musicmaker_two],
+    ]
+])
+
+voice_12_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 12',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), tenor_two_musicmaker_two],
+        [(2, 8), (4, 8), tenor_two_musicmaker_one],
+        [(4, 8), (6, 8), tenor_two_musicmaker_one],
+        [(6, 8), (8, 8), tenor_two_musicmaker_one],
+        [(8, 8), (10, 8), tenor_two_musicmaker_two],
+        [(10, 8), (12, 8), tenor_two_musicmaker_one],
+        [(12, 8), (14, 8), tenor_two_musicmaker_one],
+        [(14, 8), (16, 8), tenor_two_musicmaker_two],
+        [(16, 8), (18, 8), tenor_two_musicmaker_three],
+        [(18, 8), (20, 8), tenor_two_musicmaker_two],
+
+        [(22, 8), (24, 8), tenor_two_musicmaker_two],
+        [(24, 8), (26, 8), tenor_two_musicmaker_two],
+        [(26, 8), (28, 8), tenor_two_musicmaker_two],
+        [(28, 8), (30, 8), tenor_two_musicmaker_one],
+        [(30, 8), (32, 8), tenor_two_musicmaker_one],
+        [(32, 8), (34, 8), tenor_two_musicmaker_three],
+        [(34, 8), (36, 8), tenor_two_musicmaker_one],
+        [(36, 8), (38, 8), tenor_two_musicmaker_one],
+        [(38, 8), (39, 8), tenor_two_musicmaker_one],
+        [(40, 8), (42, 8), tenor_two_musicmaker_one],
+        [(42, 8), (44, 8), tenor_two_musicmaker_two],
+
+        [(46, 8), (48, 8), tenor_two_musicmaker_two],
+        [(48, 8), (50, 8), tenor_two_musicmaker_one],
+        [(51, 8), (52, 8), tenor_two_musicmaker_one],
+        [(52, 8), (54, 8), tenor_two_musicmaker_three],
+        [(54, 8), (56, 8), tenor_two_musicmaker_two],
+    ]
+])
+
+voice_13_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 13',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), tenor_three_musicmaker_three],
+        [(2, 8), (4, 8), tenor_three_musicmaker_one],
+        [(4, 8), (6, 8), tenor_three_musicmaker_three],
+        [(6, 8), (8, 8), tenor_three_musicmaker_one],
+        [(8, 8), (10, 8), tenor_three_musicmaker_one],
+        [(10, 8), (12, 8), tenor_three_musicmaker_three],
+        [(12, 8), (14, 8), tenor_three_musicmaker_two],
+        [(14, 8), (16, 8), tenor_three_musicmaker_two],
+
+        [(18, 8), (20, 8), tenor_three_musicmaker_three],
+        [(20, 8), (22, 8), tenor_three_musicmaker_two],
+        [(22, 8), (24, 8), tenor_three_musicmaker_two],
+        [(24, 8), (26, 8), tenor_three_musicmaker_one],
+        [(26, 8), (28, 8), tenor_three_musicmaker_one],
+        [(28, 8), (30, 8), tenor_three_musicmaker_three],
+        [(30, 8), (32, 8), tenor_three_musicmaker_two],
+        [(32, 8), (34, 8), tenor_three_musicmaker_two],
+        [(34, 8), (36, 8), tenor_three_musicmaker_two],
+
+        [(38, 8), (40, 8), tenor_three_musicmaker_one],
+        [(40, 8), (42, 8), tenor_three_musicmaker_three],
+        [(42, 8), (44, 8), tenor_three_musicmaker_one],
+        [(44, 8), (46, 8), tenor_three_musicmaker_one],
+        [(46, 8), (48, 8), tenor_three_musicmaker_one],
+
+        [(50, 8), (52, 8), tenor_three_musicmaker_three],
+        [(52, 8), (54, 8), tenor_three_musicmaker_two],
+        [(54, 8), (56, 8), tenor_three_musicmaker_two],
+    ]
+])
+
+voice_14_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 14',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), tenor_four_musicmaker_two],
+        [(2, 8), (4, 8), tenor_four_musicmaker_two],
+        [(4, 8), (6, 8), tenor_four_musicmaker_two],
+        [(6, 8), (8, 8), tenor_four_musicmaker_two],
+        [(8, 8), (10, 8), tenor_four_musicmaker_two],
+        [(10, 8), (12, 8), tenor_four_musicmaker_one],
+        [(12, 8), (14, 8), tenor_four_musicmaker_two],
+        [(14, 8), (16, 8), tenor_four_musicmaker_two],
+        [(16, 8), (18, 8), tenor_four_musicmaker_one],
+
+        [(22, 8), (24, 8), tenor_four_musicmaker_one],
+        [(24, 8), (26, 8), tenor_four_musicmaker_three],
+        [(26, 8), (28, 8), tenor_four_musicmaker_one],
+        [(28, 8), (30, 8), tenor_four_musicmaker_one],
+        [(30, 8), (32, 8), tenor_four_musicmaker_one],
+        [(32, 8), (34, 8), tenor_four_musicmaker_two],
+        [(34, 8), (36, 8), tenor_four_musicmaker_two],
+        [(36, 8), (38, 8), tenor_four_musicmaker_two],
+        [(38, 8), (40, 8), tenor_four_musicmaker_three],
+        [(40, 8), (42, 8), tenor_four_musicmaker_two],
+
+        [(46, 8), (48, 8), tenor_four_musicmaker_two],
+        [(48, 8), (50, 8), tenor_four_musicmaker_one],
+        [(50, 8), (52, 8), tenor_four_musicmaker_three],
+        [(52, 8), (54, 8), tenor_four_musicmaker_one],
+        [(54, 8), (56, 8), tenor_four_musicmaker_one],
+    ]
+])
+
+voice_15_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 15',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), tenor_five_musicmaker_two],
+        [(2, 8), (4, 8), tenor_five_musicmaker_two],
+        [(4, 8), (6, 8), tenor_five_musicmaker_two],
+        [(6, 8), (8, 8), tenor_five_musicmaker_one],
+        [(8, 8), (10, 8), tenor_five_musicmaker_three],
+        [(10, 8), (12, 8), tenor_five_musicmaker_one],
+
+        [(14, 8), (16, 8), tenor_five_musicmaker_two],
+        [(16, 8), (18, 8), tenor_five_musicmaker_two],
+        [(18, 8), (20, 8), tenor_five_musicmaker_three],
+        [(20, 8), (22, 8), tenor_five_musicmaker_one],
+        [(22, 8), (24, 8), tenor_five_musicmaker_one],
+        [(24, 8), (26, 8), tenor_five_musicmaker_one],
+        [(26, 8), (28, 8), tenor_five_musicmaker_one],
+        [(28, 8), (30, 8), tenor_five_musicmaker_three],
+
+        [(32, 8), (34, 8), tenor_five_musicmaker_two],
+        [(34, 8), (36, 8), tenor_five_musicmaker_one],
+        [(36, 8), (38, 8), tenor_five_musicmaker_one],
+        [(38, 8), (40, 8), tenor_five_musicmaker_three],
+        [(40, 8), (42, 8), tenor_five_musicmaker_one],
+        [(42, 8), (44, 8), tenor_five_musicmaker_two],
+        [(44, 8), (46, 8), tenor_five_musicmaker_two],
+
+        [(50, 8), (52, 8), tenor_five_musicmaker_one],
+        [(52, 8), (54, 8), tenor_five_musicmaker_one],
+        [(54, 8), (56, 8), tenor_five_musicmaker_one],
+    ]
+])
+
+voice_16_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 16',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), baritone_one_musicmaker_two],
+        [(2, 8), (4, 8), baritone_one_musicmaker_two],
+        [(4, 8), (6, 8), baritone_one_musicmaker_two],
+
+        [(8, 8), (10, 8), baritone_one_musicmaker_one],
+        [(10, 8), (12, 8), baritone_one_musicmaker_three],
+        [(12, 8), (14, 8), baritone_one_musicmaker_one],
+        [(14, 8), (16, 8), baritone_one_musicmaker_two],
+
+        [(18, 8), (20, 8), baritone_one_musicmaker_two],
+        [(20, 8), (22, 8), baritone_one_musicmaker_two],
+        [(22, 8), (24, 8), baritone_one_musicmaker_one],
+        [(24, 8), (26, 8), baritone_one_musicmaker_one],
+
+        [(28, 8), (30, 8), baritone_one_musicmaker_two],
+        [(30, 8), (32, 8), baritone_one_musicmaker_two],
+        [(32, 8), (34, 8), baritone_one_musicmaker_two],
+        [(34, 8), (36, 8), baritone_one_musicmaker_two],
+        [(36, 8), (38, 8), baritone_one_musicmaker_one],
+        [(38, 8), (40, 8), baritone_one_musicmaker_three],
+        [(40, 8), (42, 8), baritone_one_musicmaker_one],
+        [(42, 8), (44, 8), baritone_one_musicmaker_two],
+
+        [(46, 8), (48, 8), baritone_one_musicmaker_two],
+        [(48, 8), (50, 8), baritone_one_musicmaker_two],
+        [(50, 8), (52, 8), baritone_one_musicmaker_one],
+        [(52, 8), (54, 8), baritone_one_musicmaker_one],
+        [(54, 8), (56, 8), baritone_one_musicmaker_three],
+    ]
+])
+
+voice_17_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 17',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), baritone_two_musicmaker_one],
+        [(2, 8), (4, 8), baritone_two_musicmaker_one],
+        [(4, 8), (6, 8), baritone_two_musicmaker_two],
+        [(6, 8), (8, 8), baritone_two_musicmaker_two],
+        [(8, 8), (10, 8), baritone_two_musicmaker_two],
+        [(10, 8), (12, 8), baritone_two_musicmaker_three],
+        [(12, 8), (14, 8), baritone_two_musicmaker_one],
+        [(14, 8), (16, 8), baritone_two_musicmaker_one],
+        [(16, 8), (18, 8), baritone_two_musicmaker_one],
+
+        [(22, 8), (24, 8), baritone_two_musicmaker_two],
+        [(24, 8), (26, 8), baritone_two_musicmaker_two],
+        [(26, 8), (28, 8), baritone_two_musicmaker_two],
+        [(28, 8), (30, 8), baritone_two_musicmaker_three],
+        [(30, 8), (32, 8), baritone_two_musicmaker_one],
+        [(32, 8), (34, 8), baritone_two_musicmaker_one],
+
+        [(36, 8), (38, 8), baritone_two_musicmaker_one],
+        [(38, 8), (40, 8), baritone_two_musicmaker_one],
+        [(40, 8), (42, 8), baritone_two_musicmaker_two],
+        [(42, 8), (44, 8), baritone_two_musicmaker_two],
+        [(44, 8), (46, 8), baritone_two_musicmaker_two],
+        [(46, 8), (48, 8), baritone_two_musicmaker_one],
+        [(48, 8), (50, 8), baritone_two_musicmaker_two],
+        [(50, 8), (52, 8), baritone_two_musicmaker_two],
+        [(52, 8), (54, 8), baritone_two_musicmaker_two],
+        [(54, 8), (56, 8), baritone_two_musicmaker_three],
+    ]
+])
+
+voice_18_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 18',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), baritone_three_musicmaker_one],
+        [(2, 8), (4, 8), baritone_three_musicmaker_one],
+        [(4, 8), (6, 8), baritone_three_musicmaker_one],
+        [(6, 8), (8, 8), baritone_three_musicmaker_one],
+        [(8, 8), (10, 8), baritone_three_musicmaker_three],
+        [(10, 8), (12, 8), baritone_three_musicmaker_two],
+
+        [(16, 8), (18, 8), baritone_three_musicmaker_one],
+
+        [(20, 8), (22, 8), baritone_three_musicmaker_one],
+        [(22, 8), (24, 8), baritone_three_musicmaker_one],
+        [(24, 8), (26, 8), baritone_three_musicmaker_three],
+        [(26, 8), (28, 8), baritone_three_musicmaker_two],
+        [(28, 8), (30, 8), baritone_three_musicmaker_two],
+        [(30, 8), (32, 8), baritone_three_musicmaker_two],
+
+        [(36, 8), (38, 8), baritone_three_musicmaker_one],
+        [(39, 8), (40, 8), baritone_three_musicmaker_one],
+        [(40, 8), (42, 8), baritone_three_musicmaker_three],
+        [(42, 8), (44, 8), baritone_three_musicmaker_two],
+        [(44, 8), (46, 8), baritone_three_musicmaker_two],
+        [(46, 8), (48, 8), baritone_three_musicmaker_two],
+
+        [(50, 8), (51, 8), baritone_three_musicmaker_one],
+        [(52, 8), (54, 8), baritone_three_musicmaker_one],
+        [(54, 8), (56, 8), baritone_three_musicmaker_one],
+    ]
+])
+
+voice_19_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 19',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), bass_one_musicmaker_two],
+        [(2, 8), (4, 8), bass_one_musicmaker_two],
+        [(4, 8), (6, 8), bass_one_musicmaker_two],
+        [(6, 8), (8, 8), bass_one_musicmaker_one],
+        [(8, 8), (10, 8), bass_one_musicmaker_one],
+        [(10, 8), (12, 8), bass_one_musicmaker_two],
+        [(12, 8), (14, 8), bass_one_musicmaker_two],
+        [(14, 8), (16, 8), bass_one_musicmaker_two],
+        [(16, 8), (18, 8), bass_one_musicmaker_three],
+        [(18, 8), (20, 8), bass_one_musicmaker_one],
+
+        [(22, 8), (24, 8), bass_one_musicmaker_two],
+        [(24, 8), (26, 8), bass_one_musicmaker_two],
+        [(26, 8), (28, 8), bass_one_musicmaker_two],
+        [(28, 8), (30, 8), bass_one_musicmaker_three],
+        [(30, 8), (32, 8), bass_one_musicmaker_one],
+        [(32, 8), (34, 8), bass_one_musicmaker_one],
+        [(34, 8), (36, 8), bass_one_musicmaker_three],
+
+        [(38, 8), (40, 8), bass_one_musicmaker_one],
+        [(40, 8), (42, 8), bass_one_musicmaker_two],
+        [(42, 8), (44, 8), bass_one_musicmaker_two],
+        [(44, 8), (46, 8), bass_one_musicmaker_one],
+        [(46, 8), (48, 8), bass_one_musicmaker_two],
+        [(48, 8), (50, 8), bass_one_musicmaker_two],
+        [(50, 8), (52, 8), bass_one_musicmaker_two],
+        [(52, 8), (54, 8), bass_one_musicmaker_three],
+    ]
+])
+
+voice_20_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 20',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), bass_two_musicmaker_two],
+        [(2, 8), (4, 8), bass_two_musicmaker_two],
+        [(4, 8), (6, 8), bass_two_musicmaker_two],
+        [(6, 8), (8, 8), bass_two_musicmaker_one],
+        [(8, 8), (10, 8), bass_two_musicmaker_one],
+        [(10, 8), (12, 8), bass_two_musicmaker_two],
+        [(12, 8), (14, 8), bass_two_musicmaker_two],
+
+        [(16, 8), (18, 8), bass_two_musicmaker_two],
+        [(18, 8), (20, 8), bass_two_musicmaker_one],
+        [(20, 8), (22, 8), bass_two_musicmaker_three],
+        [(22, 8), (24, 8), bass_two_musicmaker_two],
+        [(24, 8), (26, 8), bass_two_musicmaker_two],
+        [(26, 8), (28, 8), bass_two_musicmaker_two],
+        [(28, 8), (30, 8), bass_two_musicmaker_two],
+        [(30, 8), (32, 8), bass_two_musicmaker_three],
+        [(32, 8), (34, 8), bass_two_musicmaker_one],
+
+        [(36, 8), (38, 8), bass_two_musicmaker_two],
+        [(38, 8), (40, 8), bass_two_musicmaker_one],
+        [(40, 8), (42, 8), bass_two_musicmaker_one],
+        [(42, 8), (44, 8), bass_two_musicmaker_one],
+        [(44, 8), (46, 8), bass_two_musicmaker_one],
+        [(46, 8), (48, 8), bass_two_musicmaker_two],
+        [(48, 8), (50, 8), bass_two_musicmaker_three],
+
+        [(52, 8), (54, 8), bass_two_musicmaker_two],
+        [(54, 8), (56, 8), bass_two_musicmaker_two],
+    ]
+])
+
+voice_21_timespan_list = abjad.TimespanList([
+    abjad.AnnotatedTimespan(
+        start_offset=start_offset,
+        stop_offset=stop_offset,
+        annotation=MusicSpecifier(
+            music_maker=music_maker,
+            voice_name='Voice 21',
+        ),
+    )
+    for start_offset, stop_offset, music_maker in [
+        [(0, 8), (2, 8), contrabass_musicmaker_two],
+        [(2, 8), (4, 8), contrabass_musicmaker_two],
+        [(4, 8), (6, 8), contrabass_musicmaker_two],
+        [(6, 8), (8, 8), contrabass_musicmaker_three],
+        [(8, 8), (10, 8), contrabass_musicmaker_one],
+        [(10, 8), (12, 8), contrabass_musicmaker_two],
+
+        [(14, 8), (16, 8), contrabass_musicmaker_two],
+        [(16, 8), (18, 8), contrabass_musicmaker_two],
+        [(18, 8), (20, 8), contrabass_musicmaker_three],
+        [(20, 8), (22, 8), contrabass_musicmaker_two],
+        [(22, 8), (24, 8), contrabass_musicmaker_two],
+        [(24, 8), (26, 8), contrabass_musicmaker_two],
+
+        [(30, 8), (32, 8), contrabass_musicmaker_one],
+        [(32, 8), (34, 8), contrabass_musicmaker_one],
+        [(34, 8), (36, 8), contrabass_musicmaker_one],
+        [(36, 8), (38, 8), contrabass_musicmaker_one],
+        [(38, 8), (40, 8), contrabass_musicmaker_three],
+        [(40, 8), (42, 8), contrabass_musicmaker_one],
+        [(42, 8), (44, 8), contrabass_musicmaker_one],
+        [(44, 8), (46, 8), contrabass_musicmaker_one],
+        [(46, 8), (48, 8), contrabass_musicmaker_three],
+        [(48, 8), (50, 8), contrabass_musicmaker_two],
+        [(50, 8), (52, 8), contrabass_musicmaker_two],
+        [(52, 8), (54, 8), contrabass_musicmaker_two],
+        [(54, 8), (56, 8), contrabass_musicmaker_two],
+    ]
+])
+
+all_timespan_lists = {
+    'Voice 1': voice_1_timespan_list,
+    'Voice 2': voice_2_timespan_list,
+    'Voice 3': voice_3_timespan_list,
+    'Voice 4': voice_4_timespan_list,
+    'Voice 5': voice_5_timespan_list,
+    'Voice 6': voice_6_timespan_list,
+    'Voice 7': voice_7_timespan_list,
+    'Voice 8': voice_8_timespan_list,
+    'Voice 9': voice_9_timespan_list,
+    'Voice 10': voice_10_timespan_list,
+    'Voice 11': voice_11_timespan_list,
+    'Voice 12': voice_12_timespan_list,
+    'Voice 13': voice_13_timespan_list,
+    'Voice 14': voice_14_timespan_list,
+    'Voice 15': voice_15_timespan_list,
+    'Voice 16': voice_16_timespan_list,
+    'Voice 17': voice_17_timespan_list,
+    'Voice 18': voice_18_timespan_list,
+    'Voice 19': voice_19_timespan_list,
+    'Voice 20': voice_20_timespan_list,
+    'Voice 21': voice_21_timespan_list,
+}
+
+global_timespan = abjad.Timespan(
+    start_offset=0,
+    stop_offset=max(_.stop_offset for _ in all_timespan_lists.values())
+)
+
+for voice_name, timespan_list in all_timespan_lists.items():
+    silences = abjad.TimespanList([global_timespan])
+    silences.extend(timespan_list)
+    silences.sort()
+    silences.compute_logical_xor()
+    for silence_timespan in silences:
+        timespan_list.append(
+            abjad.AnnotatedTimespan(
+                start_offset=silence_timespan.start_offset,
+                stop_offset=silence_timespan.stop_offset,
+                annotation=MusicSpecifier(
+                    music_maker=None,
+                    voice_name=voice_name,
+                ),
+            )
+        )
+    timespan_list.sort()
+
+for voice_name, timespan_list in all_timespan_lists.items():
+    shards = timespan_list.split_at_offsets(bounds)
+    split_timespan_list = abjad.TimespanList()
+    for shard in shards:
+        split_timespan_list.extend(shard)
+    split_timespan_list.sort()
+    all_timespan_lists[voice_name] = timespan_list
+
+score = abjad.Score([
+    abjad.Staff(lilypond_type='TimeSignatureContext', name='Global Context'),
+    abjad.StaffGroup(
+        [
+            abjad.Staff([abjad.Voice(name='Voice 1')],name='Staff 1', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 2')],name='Staff 2', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 3')],name='Staff 3', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 4')],name='Staff 4', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 5')],name='Staff 5', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 6')],name='Staff 6', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 7')],name='Staff 7', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 8')],name='Staff 8', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 9')],name='Staff 9', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 10')],name='Staff 10', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 11')],name='Staff 11', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 12')],name='Staff 12', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 13')],name='Staff 13', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 14')],name='Staff 14', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 15')],name='Staff 15', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 16')],name='Staff 16', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 17')],name='Staff 17', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 18')],name='Staff 18', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 19')],name='Staff 19', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 20')],name='Staff 20', lilypond_type='Staff',),
+            abjad.Staff([abjad.Voice(name='Voice 21')],name='Staff 21', lilypond_type='Staff',),
+        ],
+        name='Staff Group',
+    )
+])
+
+for time_signature in time_signatures:
+    skip = abjad.Skip(1, multiplier=(time_signature))
+    abjad.attach(time_signature, skip)
+    score['Global Context'].append(skip)
+
+print('Making containers ...')
+
+def make_container(music_maker, durations):
+    selections = music_maker(durations)
+    container = abjad.Container([])
+    container.extend(selections)
+    return container
+
+def key_function(timespan):
+    return timespan.annotation.music_maker or silence_maker
+
+for voice_name, timespan_list in all_timespan_lists.items():
+    for music_maker, grouper in itertools.groupby(
+        timespan_list,
+        key=key_function,
+    ):
+        durations = [timespan.duration for timespan in grouper]
+        container = make_container(music_maker, durations)
+        voice = score[voice_name]
+        voice.append(container)
+
+print('Splitting and rewriting ...')
+for voice in abjad.iterate(score['Staff Group']).components(abjad.Voice):
+    for i , shard in enumerate(abjad.mutate(voice[:]).split(time_signatures)):
+        time_signature = time_signatures[i]
+        abjad.mutate(shard).rewrite_meter(time_signature)
+
+print('Beaming runs ...')
+for voice in abjad.select(score).components(abjad.Voice):
+    for run in abjad.select(voice).runs():
+        specifier = abjadext.rmakers.BeamSpecifier(
+            beam_each_division=False,
+            )
+        specifier(run)
+    abjad.beam(voice[:], beam_lone_notes=False, beam_rests=False,)
+
+print('Stopping Hairpins ...')
+for staff in abjad.iterate(score['Staff Group']).components(abjad.Staff):
+    for rest in abjad.iterate(staff).components(abjad.Rest):
+        previous_leaf = abjad.inspect(rest).leaf(-1)
+        if isinstance(previous_leaf, abjad.Note):
+            abjad.attach(abjad.StopHairpin(), rest)
+        elif isinstance(previous_leaf, abjad.Chord):
+            abjad.attach(abjad.StopHairpin(), rest)
+        elif isinstance(previous_leaf, abjad.Rest):
+            pass
+
+for staff in abjad.iterate(score['Staff Group']).components(abjad.Staff):
+    first_leaf = abjad.select(staff).leaves()[0]
+    stop = abjad.LilyPondLiteral(r'\!', format_slot='after',)
+    abjad.attach(stop, first_leaf)
+
+print('Adding attachments ...')
+bar_line = abjad.BarLine('|.')
+markup = abjad.Markup(r'\bold { J }')
+mark = abjad.RehearsalMark(markup=markup)
+
+instruments = cyc([
+    abjad.SopraninoSaxophone(),
+    abjad.SopranoSaxophone(),
+    abjad.SopranoSaxophone(),
+    abjad.SopranoSaxophone(),
+    abjad.AltoSaxophone(),
+    abjad.AltoSaxophone(),
+    abjad.AltoSaxophone(),
+    abjad.AltoSaxophone(),
+    abjad.AltoSaxophone(),
+    abjad.AltoSaxophone(),
+    abjad.TenorSaxophone(),
+    abjad.TenorSaxophone(),
+    abjad.TenorSaxophone(),
+    abjad.TenorSaxophone(),
+    abjad.TenorSaxophone(),
+    abjad.BaritoneSaxophone(),
+    abjad.BaritoneSaxophone(),
+    abjad.BaritoneSaxophone(),
+    abjad.BassSaxophone(),
+    abjad.BassSaxophone(),
+    abjad.ContrabassSaxophone(),
+])
+
+abbreviations = cyc([
+    abjad.MarginMarkup(markup=abjad.Markup('spro.'),),
+    abjad.MarginMarkup(markup=abjad.Markup('spr.1'),),
+    abjad.MarginMarkup(markup=abjad.Markup('spr.2'),),
+    abjad.MarginMarkup(markup=abjad.Markup('spr.3'),),
+    abjad.MarginMarkup(markup=abjad.Markup('alt.1'),),
+    abjad.MarginMarkup(markup=abjad.Markup('alt.2'),),
+    abjad.MarginMarkup(markup=abjad.Markup('alt.3'),),
+    abjad.MarginMarkup(markup=abjad.Markup('alt.4'),),
+    abjad.MarginMarkup(markup=abjad.Markup('alt.5'),),
+    abjad.MarginMarkup(markup=abjad.Markup('alt.6'),),
+    abjad.MarginMarkup(markup=abjad.Markup('ten.1'),),
+    abjad.MarginMarkup(markup=abjad.Markup('ten.2'),),
+    abjad.MarginMarkup(markup=abjad.Markup('ten.3'),),
+    abjad.MarginMarkup(markup=abjad.Markup('ten.4'),),
+    abjad.MarginMarkup(markup=abjad.Markup('ten.5'),),
+    abjad.MarginMarkup(markup=abjad.Markup('bar.1'),),
+    abjad.MarginMarkup(markup=abjad.Markup('bar.2'),),
+    abjad.MarginMarkup(markup=abjad.Markup('bar.3'),),
+    abjad.MarginMarkup(markup=abjad.Markup('bs.1'),),
+    abjad.MarginMarkup(markup=abjad.Markup('bs.2'),),
+    abjad.MarginMarkup(markup=abjad.Markup('cbs.'),),
+])
+
+names = cyc([
+    abjad.StartMarkup(markup=abjad.Markup('Sopranino'),),
+    abjad.StartMarkup(markup=abjad.Markup('Soprano 1'),),
+    abjad.StartMarkup(markup=abjad.Markup('Soprano 2'),),
+    abjad.StartMarkup(markup=abjad.Markup('Soprano 3'),),
+    abjad.StartMarkup(markup=abjad.Markup('Alto 1'),),
+    abjad.StartMarkup(markup=abjad.Markup('Alto 2'),),
+    abjad.StartMarkup(markup=abjad.Markup('Alto 3'),),
+    abjad.StartMarkup(markup=abjad.Markup('Alto 4'),),
+    abjad.StartMarkup(markup=abjad.Markup('Alto 5'),),
+    abjad.StartMarkup(markup=abjad.Markup('Alto 6'),),
+    abjad.StartMarkup(markup=abjad.Markup('Tenor 1'),),
+    abjad.StartMarkup(markup=abjad.Markup('Tenor 2'),),
+    abjad.StartMarkup(markup=abjad.Markup('Tenor 3'),),
+    abjad.StartMarkup(markup=abjad.Markup('Tenor 4'),),
+    abjad.StartMarkup(markup=abjad.Markup('Tenor 5'),),
+    abjad.StartMarkup(markup=abjad.Markup('Baritone 1'),),
+    abjad.StartMarkup(markup=abjad.Markup('Baritone 2'),),
+    abjad.StartMarkup(markup=abjad.Markup('Baritone 3'),),
+    abjad.StartMarkup(markup=abjad.Markup('Bass 1'),),
+    abjad.StartMarkup(markup=abjad.Markup('Bass 2'),),
+    abjad.StartMarkup(markup=abjad.Markup('Contrabass'),),
+])
+
+for staff in abjad.iterate(score['Staff Group']).components(abjad.Staff):
+    leaf1 = abjad.select(staff).leaves()[0]
+    abjad.attach(next(instruments), leaf1)
+    abjad.attach(next(abbreviations), leaf1)
+    abjad.attach(next(names), leaf1)
+
+for staff in abjad.select(score['Staff Group']).components(abjad.Staff):
+    leaf1 = abjad.select(staff).leaves()[0]
+    last_leaf = abjad.select(staff).leaves()[-1]
+    abjad.attach(bar_line, last_leaf)
+
+for staff in abjad.iterate(score['Global Context']).components(abjad.Staff):
+    leaf1 = abjad.select(staff).leaves()[0]
+    abjad.attach(mark, leaf1)
+
+score_file = abjad.LilyPondFile.new(
+    score,
+    includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+    )
+
+abjad.SegmentMaker.comment_measure_numbers(score)
+###################
+
+directory = '/Users/evansdsg2/Scores/guerrero/Segments/Section_J'
+pdf_path = f'{directory}/Section_J.pdf'
+path = pathlib.Path('Section_J.pdf')
+if path.exists():
+    print(f'Removing {pdf_path} ...')
+    path.unlink()
+time_1 = time.time()
+print(f'Persisting {pdf_path} ...')
+result = abjad.persist(score_file).as_pdf(pdf_path)
+print(result[0])
+print(result[1])
+print(result[2])
+success = result[3]
+if success is False:
+    print('LilyPond failed!')
+time_2 = time.time()
+total_time = time_2 - time_1
+print(f'Total time: {total_time} seconds')
+if path.exists():
+    print(f'Opening {pdf_path} ...')
+    os.system(f'open {pdf_path}')
+score_lines = open('/Users/evansdsg2/Scores/guerrero/Segments/Section_J/Section_J.ly').readlines()
+open('/Users/evansdsg2/Scores/guerrero/Build/Section_J.ly', 'w').writelines(score_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 1']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/1.)sopranino'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/1.)sopranino/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/1.)sopranino/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 2']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/2.)soprano1'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/2.)soprano1/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/2.)soprano1/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 3']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/3.)soprano2'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/3.)soprano2/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/3.)soprano2/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 4']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/4.)soprano3'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/4.)soprano3/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/4.)soprano3/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 5']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/5.)alto1'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/5.)alto1/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/5.)alto1/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 6']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/6.)alto2'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/6.)alto2/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/6.)alto2/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 7']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/7.)alto3'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/7.)alto3/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/7.)alto3/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 8']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/8.)alto4'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/8.)alto4/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/8.)alto4/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 9']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/9.)alto5'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/9.)alto5/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/9.)alto5/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 10']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/10.)alto6'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/10.)alto6/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/10.)alto6/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 11']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/11.)tenor1'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/11.)tenor1/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/11.)tenor1/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 12']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/12.)tenor2'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/12.)tenor2/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/12.)tenor2/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 13']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/13.)tenor3'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/13.)tenor3/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/13.)tenor3/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 14']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/14.)tenor4'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/14.)tenor4/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/14.)tenor4/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 15']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/15.)tenor5'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/15.)tenor5/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/15.)tenor5/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 16']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/16.)baritone1'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/16.)baritone1/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/16.)baritone1/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 17']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/17.)baritone2'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/17.)baritone2/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/17.)baritone2/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 18']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/18.)baritone3'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/18.)baritone3/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/18.)baritone3/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 19']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/19.)bass1'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/19.)bass1/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/19.)bass1/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 20']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/20.)bass2'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/20.)bass2/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/20.)bass2/Section_J.ly', 'w').writelines(part_lines[15:-1])
+
+for staff in abjad.iterate(score['Staff 21']).components(abjad.Staff):
+    signatures = abjad.select(score['Global Context']).components(abjad.Staff)
+    signature_copy = abjad.mutate(signatures).copy()
+    staff_copy = abjad.mutate(staff).copy()
+    part = abjad.Score()
+    part.insert(0, staff)
+    part.insert(0, signature_copy)
+    part_file = abjad.LilyPondFile.new(
+        part,
+        includes=['first_stylesheet.ily', '/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily'],
+        )
+    directory = '/Users/evansdsg2/Scores/guerrero/Build/parts/21.)contrabass'
+    pdf_path = f'{directory}/Section_J.pdf'
+    path = pathlib.Path('Section_J.pdf')
+    if path.exists():
+        print(f'Removing {pdf_path} ...')
+        path.unlink()
+    time_1 = time.time()
+    print(f'Persisting {pdf_path} ...')
+    result = abjad.persist(part_file).as_pdf(pdf_path)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    success = result[3]
+    if success is False:
+        print('LilyPond failed!')
+    time_2 = time.time()
+    total_time = time_2 - time_1
+    print(f'Total time: {total_time} seconds')
+    if path.exists():
+        print(f'Opening {pdf_path} ...')
+        os.system(f'open {pdf_path}')
+    part_lines = open('/Users/evansdsg2/Scores/guerrero/Build/parts/21.)contrabass/Section_J.ly').readlines()
+    open('/Users/evansdsg2/Scores/guerrero/Build/parts/21.)contrabass/Section_J.ly', 'w').writelines(part_lines[15:-1])
+\end{lstlisting}

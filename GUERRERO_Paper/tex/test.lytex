@@ -1,0 +1,3795 @@
+\documentclass[11pt]{book}
+\usepackage[papersize={8.5in, 11in}, margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage[]{pdfpages}
+\usepackage[utf8]{inputenc}
+
+% code listing
+\RequirePackage{listings}
+\RequirePackage{color}
+\RequirePackage[utf8]{inputenc}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.95}
+
+\lstdefinestyle{mystyle}{
+  backgroundcolor=\color{backcolour},   commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2
+}
+\lstset{style=mystyle}
+
+\begin{document}
+
+\pagenumbering{roman}
+\title{GUERRERO:
+\\Conception and Process of a Surface}
+\author{Gregory Rowland Evans}
+\date{May 3, 2019}
+\maketitle
+
+\newpage
+~\vfill
+\thispagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{\baselineskip}
+Copyright \copyright\ \the\year\ Gregory Rowland Evans
+
+\par Published by www.gregoryrowlandevans.com
+
+\par This paper was typeset in \LaTeX \ and all graphics were created by the author with Lilypond.
+
+\par www.latex-project.org
+\par lilypond.org
+
+\par Licensed under the Apache License, Version 2.0 (the ``License''); you may not
+use this file except in compliance with the License. You may obtain a copy
+of the License at www.apache.org/licenses/LICENSE-2.0. Unless
+required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an ``AS IS'' BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.\index{license}
+
+\par\textit{First printing, May, 2019}
+
+%\vspace*{\fill}
+%\begin{center}
+%This page is intentionally left blank.
+%\end{center}
+%\vspace*{\fill}
+
+\setcounter{secnumdepth}{3}
+\tableofcontents
+\begin{doublespace}
+% \lstlistoflistings
+
+\chapter{Analysis}
+\pagenumbering{arabic}
+\section{Introduction}
+\par \textit{GUERRERO} is a composition for twenty-one saxophones ranging from Contrabass to Sopranino which was composed for the Frost Saxophone Ensemble in December of 2018. The genesis of this work was strongly related to the medium in which it was created. It was composed with the Abjad\footnote{abjad.mbrsi.org} Application Programming Interface\footnote{API} for Formalized Score Control\footnote{FSC} in the Python\footnote{www.python.org} programming language, making use of built-in tools within Abjad's framework and software written by the composer. While this analysis is intended to elucidate the construction of the work, chapter three of this document contains the source code, written in Python, of \textit{GUERRERO} allowing for the direct perusal of the materials in question.
+\par In the Winter of 2017, I began using OpenMusic,\footnote{OM} a music computation software produced by IRCAM.\footnote{Institut de Recherche et Coordination Acoustique/Musique} This program allowed me to realize many of the musical ideas that I had yet to crystallize and using it was a major stepping stone in the development of my music. However, I felt that OM had some significant drawbacks for the workflow I was hoping to develop, which led me to look into other software. The ``generative task'' of a given software refers to the intended use of a program.\cite{baca} The existence of a generative task implies in what ways features within a program are intended to be deployed and what the program is good at achieving. Artists are able to use software for purposes outside of its generative task, achieving fascinating results, but I eventually knew that OM's generative task was not sufficiently open to the kind of workflow I wanted from a computer-assisted composition program.\footnote{A thorough description of the workflow I desired as well as a comparison of Abjad with similar software can be found in my masters thesis: \textit{An Introduction to Modeling Composition through Abjad's Model of Music Notation}} In the Summer of 2018, I began to study the Abjad API for FSC, developed by my friend and mentor Trevor Ba\v{c}a along with V\'ictor Ad\'an and Josiah Wolf Oberholtzer in Python.\footnote{A brief history of Abjad can be found here: http://abjad.mbrsi.org/core\_concepts/from\_abjads\_developers.html} What began as a casual interaction with a new piece of music software rapidly became a determinant of new musical potentials and helped me to form essential ideologies in my compositional practice.
+\section{Abjad: FSC and Composition as Software Development}
+\subsection{Formalized Score Control}
+\par Composing with Abjad can be seen as a kind of sorcery by which numbers and data are transformed into a score to be interpreted by the performer. In fact, the software's name is derived from the Abjad numeral system whereby letters assigned a numeric value can be used to encode words and phrases with hidden dates and other numerological symbology. There appear to be two fundamental principles held by most dedicated users of Abjad, including myself. The first principle is that of Formalized Score Control. This notion is based upon the idea that the act of composing for acoustic instruments requires a relay of some form of instruction from the composer to the interpreter. In most forms of Western classical music, the medium of transference is that of music notation in the traditional style. With FSC, the act of composition is concerned with the manipulation of notational graphemes on a page of a score that represent an action to be achieved by the interpreter, not an abstract description of what sounds may result. These graphic elements are often traditional notational figures such as note heads, beams, slurs, and more, but can also be articulations, text, lines, and other shapes. In this case, the score is a deliberate set of instructions intended to affect the mode of performance, thus the clarity, precision, and purity of this document is held as a significant priority. For instance, the difference between the notation of this passage \\
+\begin{lilypond}[staffsize=12, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context RhythmicStaff = "Upper Staff"
+        {
+            \times 2/3 {
+\tempo 4=60
+                c16 [
+                c8.
+                \times 4/5 {
+                    c16
+                    c16 ]
+                    c2
+                }
+            }
+            \times 4/5 {
+                c8
+                r16
+                c16 [
+                c16
+            }
+            c8.
+            c16 ]
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+and this passage \\
+\begin{lilypond}[staffsize=12, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet_2.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context RhythmicStaff = "Upper Staff"
+        \with
+        {
+            \override TextScript.staff-padding = #4
+            \override TupletBracket.staff-padding = #0
+        }
+        {
+            \times 2/3 {
+                %\tempo 4=60
+                c16
+                ^ \markup { 0'00'' }
+                c8.
+                %^ \markup { 0'00'' }
+                \times 4/5 {
+                    c16
+                   % ^ \markup { 0'00'' }
+                    c16
+                  %  ^ \markup { 0'00'' }
+                    c2
+                  %  ^ \markup { 0'00'' }
+                }
+            }
+            \times 4/5 {
+                c8
+                ^ \markup { 0'02'' }
+                r16
+              %  ^ \markup { 0'02'' }
+                c16
+             %   ^ \markup { 0'02'' }
+                c16
+              %  ^ \markup { 0'02'' }
+            }
+            c8.
+            ^ \markup { 0'03'' }
+            c16
+           % ^ \markup { 0'03'' }
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+is in no way trivial. Although the two passages are created with identical musical content, a Lilypond\footnote{lilypond.org} stylesheet changes the graphic result, removing beams, dots, rests, stems, and tuplet brackets. Abjad does not restrict the end result of a composer's score, but the choice of how the music is represented is an important one. It is fundamental to certain composers who use Abjad that the user may systematically choose when and how notation changes throughout the course of a score to better represent the desired influence of the visual document upon the interpreter. The deeply personal nature of a composer's chosen notation leads me to doubt that a dedicated user of Abjad would be satisfied with an edition of their score that was re-engraved by a copyist or was forced to match the house style of a publisher.\footnote{This is not to say that compromises are impossible, but to highlight that the personality of the composer is transparent within the notation of a score.}
+\par In the past, a composer may have considered manipulating parameters of sound as a type of algebra of musical generation. Later, the Parisian Spectral composers took a more holistic view of musical parameters, taking a scientific view of sound as their model for musical composition. With the Abjad ideology of FSC, any and all graphic elements that appear on the page of a score may be treated as manipulable compositional entities. This means that transformational and developmental processes within a given piece might only occur in a parameter of performance mode rather than in more traditional musical materials such as pitch and rhythm. In this way, I am not composing with parameters of sound, rather I am composing with parameters of performance practices. Sound is no longer my model for music; bodily action takes its place. As an example, consider the following passage from my composition \textit{Cthar} for two cellos. \\
+\begin{lilypond}[staffsize=12, ragged-right=##t, line-width=7\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet_3.ily"                                      %! LilyPondFile
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 2] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            \bar "|"
+
+        }
+        \context StaffGroup = "Staff Group 1"
+        <<
+            \context BowStaff = "Staff 1"
+            {
+                \context Voice = "Voice 1"
+                {
+                    {
+                        \times 16/17 {
+                            % [Voice 1 measure 1] %! COMMENT_MEASURE_NUMBERS
+                            \set Staff.shortInstrumentName =
+                            \markup { B.H. }
+                            \set Staff.instrumentName =
+                            \markup { "Bow Hand" }
+                            \tempo 8=60
+                            \clef "percussion"
+                            \tweak Y-offset #2.0
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            1
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \upbow
+                            \tweak Y-offset #0.4
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            3
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #-1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \downbow
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''8
+                            - \tweak style #'line
+                            \glissando
+                            ^ \upbow
+                            \tweak Y-offset #-0.4
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            2
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'zigzag
+                            \glissando
+                            ^ \downbow
+                            \tweak Y-offset #2.0
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            1
+                                }
+                            a'''8.
+                            - \tweak style #'zigzag
+                            \glissando
+                            ^ \upbow
+                            \tweak Y-offset #-0.4
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            2
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \downbow
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''16
+                            ~
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \parenthesize \upbow
+                            \tweak Y-offset #-1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            5
+                                }
+                            a'''8.
+                            - \tweak style #'line
+                            \glissando
+                            ^ \downbow
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'dotted-line
+                            \glissando
+                            ^ \upbow
+                            \tweak Y-offset #-1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \downbow
+                        }
+                    }
+                    {
+                        % [Voice 1 measure 2] %! COMMENT_MEASURE_NUMBERS
+                        \tweak Y-offset #1.2
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        4
+                                        5
+                            }
+                        a'''16
+                        - \tweak style #'line
+                        \glissando
+                        ^ \upbow
+                        \tweak Y-offset #-0.4
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        2
+                                        5
+                            }
+                        a'''16
+                        ~
+                        - \tweak style #'line
+                        \glissando
+                        \tweak Y-offset #-0.4
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        2
+                                        5
+                            }
+                        a'''16
+                        - \tweak style #'line
+                        \glissando
+                        ^ \parenthesize \downbow
+                        \tweak Y-offset #2.0
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        1
+                                        1
+                            }
+                        a'''16
+                        - \tweak style #'line
+                        \glissando
+                        ^ \upbow
+                        \tweak Y-offset #1.2
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        4
+                                        5
+                            }
+                        a'''8.
+                        - \tweak style #'line
+                        \glissando
+                        ^ \downbow
+                        \tweak Y-offset #2.0
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        1
+                                        1
+                            }
+                        a'''16
+                        - \tweak style #'dotted-line
+                        \glissando
+                        ^ \upbow
+                        \tweak Y-offset #-0.4
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        2
+                                        5
+                            }
+                        a'''8
+                        - \tweak style #'dotted-line
+                        \glissando
+                        ^ \downbow
+                        \tweak Y-offset #1.2
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        4
+                                        5
+                            }
+                        a'''8
+                    }
+                    {
+                        r2
+                        \!
+                    }
+
+                }
+            }
+            \context BeamStaff = "Staff 5"
+            {
+                \context Voice = "Voice 5"
+                \with
+                {
+                    \override TextSpanner.staff-padding = #0
+                }
+                {
+                    {
+                        \times 16/17 {
+                            % [Voice 5 measure 1] %! COMMENT_MEASURE_NUMBERS
+                            \set Staff.shortInstrumentName =
+                            \markup { vc.I }
+                            \set Staff.instrumentName =
+                            \markup { "Violoncello I" }
+                            \clef "percussion"
+                            a'''16
+                            [
+                            - \abjad-dashed-line-with-arrow
+                            - \tweak bound-details.left.text \markup {
+                                \concat
+                                    {
+                                        \upright
+                                            st.
+                                        \hspace
+                                            #0.5
+                                    }
+                                }
+                            - \tweak bound-details.right.text \markup {
+                                \upright
+                                    ord.
+                                }
+                            \startTextSpan
+                            a'''16
+                            a'''16
+                            a'''8
+                            a'''16
+                            a'''8.
+                            a'''16
+                            a'''16
+                            ~
+                            a'''16
+                            a'''8.
+                            a'''16
+                            a'''16
+                        }
+                    }
+                    {
+                        % [Voice 5 measure 2] %! COMMENT_MEASURE_NUMBERS
+                        a'''16
+                        a'''16
+                        ~
+                        a'''16
+                        a'''16
+                        a'''8.
+                        a'''16
+                        a'''8
+                        a'''8
+                        \stopTextSpan
+                        ]
+                    }
+                    {
+                        r2
+                        \!
+                    }
+                }
+            }
+            \context Staff = "Staff 2"
+            {
+                \context Voice = "Voice 2"
+                {
+                    {
+                        \times 16/17 {
+                            % [Voice 2 measure 1] %! COMMENT_MEASURE_NUMBERS
+                            \set Staff.shortInstrumentName =
+                            \markup { L.H. }
+                            \set Staff.instrumentName =
+                            \markup { "Left Hand" }
+                            \clef "bass"
+                            cs16
+                            \fff
+                            - \tenuto
+                            \>
+                            [
+                            e,8
+                            - \tenuto
+                            <c, cs>16
+                            - \tenuto
+                            cs8.
+                            - \tenuto
+                            e,16
+                            - \tenuto
+                            <e, fs>16
+                            - \tenuto
+                            ~
+                            <e, fs>16
+                            <c fs>8.
+                            - \tenuto
+                            fs16
+                            - \tenuto
+                            c16
+                            - \tenuto
+                            fs16
+                            - \tenuto
+                            <e, fs>16
+                            \mf
+                            - \tenuto
+                            - \tweak stencil #constante-hairpin
+                            \<
+                        }
+                    }
+                    {
+                        % [Voice 2 measure 2] %! COMMENT_MEASURE_NUMBERS
+                        cqs8..
+                        \p
+                        - \accent
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        c32
+                        - \accent
+                        ~
+                        c16.
+                        cqs32
+                        - \accent
+                        ~
+                        cqs8
+                        ~
+                        cqs32
+                        c16.
+                        - \accent
+                        cqs8
+                        \mp
+                        - \accent
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                    }
+                    {
+                        r2
+                        \!
+                    }
+                }
+            }
+        >>
+        \context StaffGroup = "Staff Group 2"
+        <<
+            \context BowStaff = "Staff 3"
+            {
+                \context Voice = "Voice 3"
+                {
+                    {
+                        \tweak text #tuplet-number::calc-fraction-text
+                        \times 12/13 {
+                            % [Voice 3 measure 1] %! COMMENT_MEASURE_NUMBERS
+                            \set Staff.shortInstrumentName =
+                            \markup { B.H. }
+                            \set Staff.instrumentName =
+                            \markup { "Bow Hand" }
+                            \tempo 8=60
+                            \clef "percussion"
+                            \tweak Y-offset #-1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \downbow
+                            \tweak Y-offset #-0.4
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            2
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #0.4
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            3
+                                            5
+                                }
+                            a'''16
+                            ~
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #0.4
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            3
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \parenthesize \downbow
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''8.
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #2.0
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            1
+                                }
+                            a'''16
+                            - \tweak style #'zigzag
+                            \glissando
+                            ^ \upbow
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'zigzag
+                            \glissando
+                            ^ \downbow
+                            \tweak Y-offset #2.0
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            1
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \upbow
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''16
+                            ~
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \parenthesize \downbow
+                            \tweak Y-offset #2.0
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            1
+                                }
+                            a'''16
+                            - \tweak style #'line
+                            \glissando
+                            ^ \upbow
+                        }
+                        \tweak Y-offset #1.2
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        4
+                                        5
+                            }
+                        a'''8.
+                        - \tweak style #'dotted-line
+                        \glissando
+                        \tweak Y-offset #0.4
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        3
+                                        5
+                            }
+                        a'''16
+                        - \tweak style #'line
+                        \glissando
+                        ^ \downbow
+                    }
+                    {
+                        \tweak text #tuplet-number::calc-fraction-text
+                        \times 4/3 {
+                            % [Voice 3 measure 2] %! COMMENT_MEASURE_NUMBERS
+                            \tweak Y-offset #1.2
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            4
+                                            5
+                                }
+                            a'''8
+                            - \tweak style #'line
+                            \glissando
+                            \tweak Y-offset #2.0
+                            \tweak stencil #ly:text-interface::print
+                            \tweak text \markup {
+                                \center-align
+                                    \vcenter
+                                        \fraction
+                                            1
+                                            1
+                                }
+                            a'''16
+                        }
+                    }
+                    {
+                        r2.
+                        \!
+                    }
+                    {
+                        \tweak Y-offset #1.2
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        4
+                                        5
+                            }
+                        a'''8
+                        - \tweak style #'line
+                        \glissando
+                        ^ \downbow
+                        \tweak Y-offset #2.0
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        1
+                                        1
+                            }
+                        a'''16
+                        - \tweak style #'line
+                        \glissando
+                        ^ \upbow
+                        \tweak Y-offset #1.2
+                        \tweak stencil #ly:text-interface::print
+                        \tweak text \markup {
+                            \center-align
+                                \vcenter
+                                    \fraction
+                                        4
+                                        5
+                            }
+                        a'''16
+                        - \tweak style #'dotted-line
+                        \glissando
+                        ^ \downbow
+                    }
+                }
+            }
+            \context BeamStaff = "Staff 6"
+            {
+                \context Voice = "Voice 6"
+                \with
+                {
+                    \override TextSpanner.staff-padding = #0
+                }
+                {
+                    {
+                        \tweak text #tuplet-number::calc-fraction-text
+                        \times 12/13 {
+                            % [Voice 6 measure 1] %! COMMENT_MEASURE_NUMBERS
+                            \set Staff.shortInstrumentName =
+                            \markup { vc.II }
+                            \set Staff.instrumentName =
+                            \markup { "Violoncello II" }
+                            \clef "percussion"
+                            a'''16
+                            [
+                            - \abjad-dashed-line-with-arrow
+                            - \tweak bound-details.left.text \markup {
+                                \concat
+                                    {
+                                        \upright
+                                            sp.
+                                        \hspace
+                                            #0.5
+                                    }
+                                }
+                            - \tweak bound-details.right.text \markup {
+                                \upright
+                                    msp.
+                                }
+                            \startTextSpan
+                            a'''16
+                            a'''16
+                            ~
+                            a'''16
+                            a'''8.
+                            a'''16
+                            a'''16
+                            a'''16
+                            a'''16
+                            ~
+                            a'''16
+                            a'''16
+                        }
+                        a'''8.
+                        a'''16
+                    }
+                    {
+                        \tweak text #tuplet-number::calc-fraction-text
+                        \times 4/3 {
+                            % [Voice 6 measure 2] %! COMMENT_MEASURE_NUMBERS
+                            a'''8
+                            a'''16
+                            \stopTextSpan
+                            ]
+                        }
+                    }
+                    {
+                      \once \override Dots.transparent = ##t
+                        r2.
+                        \!
+                    }
+                    {
+                        a'''8
+                        [
+                        - \abjad-dashed-line-with-arrow
+                        - \tweak bound-details.left.text \markup {
+                            \concat
+                                {
+                                    \upright
+                                        ord.
+                                    \hspace
+                                        #0.5
+                                }
+                            }
+                        - \tweak bound-details.right.text \markup {
+                            \upright
+                                st.
+                            }
+                        \startTextSpan
+                        a'''16
+                        a'''16 ]
+                    }
+                }
+            }
+            \context Staff = "Staff 4"
+            {
+                \context Voice = "Voice 4"
+                {
+                    {
+                        % [Voice 4 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \set Staff.shortInstrumentName =
+                        \markup { L.H. }
+                        \set Staff.instrumentName =
+                        \markup { "Left Hand" }
+                        \clef "bass"
+                        e16.
+                        \p
+                        - \accent
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        [
+                        eqf32
+                        ~
+                        eqf8
+                        ef16.
+                        - \accent
+                        dqs32
+                        - \accent
+                        ~
+                        dqs8
+                        ~
+                        dqs32
+                        d16.
+                        - \accent
+                        ~
+                        d32
+                        dqs16.
+                        \mp
+                        - \accent
+                        - \tweak stencil #constante-hairpin
+                        \<
+                    }
+                    {
+                        <e, fs>8
+                        \fff
+                        - \tenuto
+                        \>
+                        <c fs>16
+                        - \tenuto
+                        fs16
+                        \mf
+                        - \tenuto
+                        - \tweak stencil #constante-hairpin
+                        \<
+                    }
+                    {
+                        \tweak text #tuplet-number::calc-fraction-text
+                        \times 8/7 {
+                            % [Voice 4 measure 2] %! COMMENT_MEASURE_NUMBERS
+                            ef8
+                            \p
+                            - \accent
+                            - \tweak stencil #constante-hairpin
+                            \<
+                            dqs16.
+                            \mp
+                            - \accent
+                            - \tweak stencil #constante-hairpin
+                            \<
+                            ]
+                        }
+                    }
+                    {
+                        r2.
+                        \!
+                    }
+                    {
+                        ef32
+                        \p
+                        - \accent
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        [
+                        eqf32
+                        - \accent
+                        ~
+                        eqf8
+                        ~
+                        eqf32
+                        ef32 ]
+                        \mp
+                        - \accent
+                        - \tweak stencil #constante-hairpin
+                        \<
+                    }
+                }
+            }
+        >>
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+Not only are the traditional parameters of articulation, intensity, pitch, and rhythm being manipulated programmatically, but so are features such as bow speed, bowing technique, and string contact point.\footnote{While this piece uses a pseudo-tablature notation, it is not the only method by which non-traditional graphic elements can be manipulated in Abjad, although several composers who use Abjad have had significant periods where tablature was the solution to the notation of various parametric processes.}
+\subsection{Composition as Software Development}
+\par The second principle that is shared by many composers who use Abjad is Composition as Software Development. This applies to the kinds of workflows Abjad makes possible. While composers may use Abjad in many different ways, with Composition as Software Development the composer is no longer a simple user of a software, but a software developer in their own right.
+\par Each composition is developed in the way a programmer writes software. Various reservoirs of material and processes can be defined and called at specific times throughout the composition process to be assembled into a final score. The composer also should not rely only on the built-in tools of Abjad for their music, but should also write their own software to produce notation in very personal ways. Composers should also do their best to follow established best practices of Python development for the sake of the clarity of the source code and for the possibility of expanding upon previously written code.\footnote{For instance, composers should do their best to encapsulate functions that can be reused, rather than writing the same loop many times.} An added benefit of this methodology is that it is common for software developers to house their code in online repositories such as GitHub. These repositories allow for the perusal not only of others' source code, but also for the viewing of a history of the changes to each file as a project develops.\footnote{Because of this, a full history of my works composed in Abjad can be found in my repositories at github.com/GregoryREvans. This is intended to keep with Abjad's open-source philosophy and for pedagogical purposes.}
+\par A final aspect of this principle addresses the issue of the user interface. If composing music with Abjad is akin to software design, then the resulting score is the Graphic User Interface\footnote{GUI} of the program. The user is able to interact with the software through their interpretation of the score. Just as a professional software developer would take great care to ensure that the GUI of a program is pristine, so do many Abjad composers. My reliance upon, and even integration of, technology in my compositional process and aesthetic could be linked to the use of the computer by spectral composers for models of sound or the use of computers by Iannis Xenakis and Brian Ferneyhough for its ability to help process abstractions. In contrast with these historical uses of the computer for music composition, the speed of modern computation allows for the rapid prototyping of material, allowing the composer to compose iteratively, one step at a time, instead of composing the entire process of a composition in one sitting.
+\section{Genesis of \textit{GUERRERO}}
+\par Although \textit{GUERRERO} was neither my first completed composition with Abjad nor the first I conceptualized, it began as a folder of some of the earliest experiments that I used to explore my own idiosyncratic workflow with Abjad. At the time, I had been studying the music of Francisco Guerrero Mar\'in, a Spanish composer whose music is not well known in the United States. Specifically, I was studying his work Rhea\cite{rhea} for twelve saxophones. Guerrero's music tended to be post-serial in construction, relying on many serial procedures for the organization of harmonic material with the added concern of combinatorial arrangements of many parameters of sound. While his early works are primarily concerned with combinatorial manipulation, his later work is often based on musical mappings of fractal models. While I have found no complete analyses of his works in English, my study of Rhea leads me to believe that it is both a combinatorial work and an early fractal work. The seven-term axiom\cite{besada} that appears in many of his pieces could be considered a kind of self-similar process. Because I had the power of the Python programming language at my disposal for musical purposes, I decided to experiment with combinatorics, fractal models, and cycles as an homage to Guerrero in my own piece for twelve saxophones.
+\par Before I began serious work on the piece, I asked Joey Speranzo, the conductor of the Frost Saxophone Ensemble, if there would be any possibility for a reading session of the piece once I completed it. We later agreed instead to premiere the piece on of one of the ensemble's concerts. During the composition process, the number of performers in the ensemble steadily grew from twelve to twenty-one. Since much of my combinatorial planning relied heavily on the number twelve, the manipulation through combinatorics was abandoned as a primary feature in this piece, but fractals and cycles remained. Certainly, other numbers could have replaced twelves as the number of significance, but I chose to forego this option because of the gradual change of the ensemble size.\footnote{The original twelve member ensemble initially grew to fourteen, followed by sixteen, nineteen, and finally twenty-one.}
+\section{Initial Concepts and Materials}
+\par \textit{GUERRERO} also has an extra-musical inspiration. I had been reading a number of books on astronomy concurrently with my work on the piece, and I was interested in the physics of light. I was interested in writing a piece of music that had a constant, such as light, that could be  warped, absorbed, perturbed, reflected, and refracted. This established the foundation of pitch material in this work.
+\par At first, I experimented with using a pure harmonic spectrum as the fundamental timbre of this piece. I also experimented with harmonies derived from ring modulation.\footnote{My interest in these spectral techniques at the time likely stemmed from my recent exposure to OM. At this stage, I was still trying to use Abjad as if it were a ``better'' version of OM.} In the end, I chose a harmony formed from a twelve-tone row of fixed register by voicing it across the entire ensemble, because I was interested in an auditory effect that felt less weighted to a tonic or fundamental, but felt more evenly distributed in density. This chord no longer functioned as a tone-row but as a harmony-timbre from which all other material is in some way derived. The chord in question is Link Chord \#23. This particular chord also features elements of parallel inversion around the axis of the central perfect fifth. The interval at the bottom of the chord is a minor second while the interval just above the central axis is a major seventh. The second interval from the bottom is a major third and the second interval above the central axis is a minor sixth. Finally, the interval just below the central axis is a major second and the topmost interval is a minor seventh. It was my intention that this element of parallel inversion would allow for a greater relationship between materials in different registers of the ensemble because of the similarity in harmonic content, while keeping the kind of smooth, unweighted harmony based on my previous criteria. \\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/harmony/first_stylesheet.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+        }
+        \context PianoStaff = "Staff Group"
+        <<
+            \context Staff = "Staff 1"
+            \with
+            {
+                \consists Horizontal_bracket_engraver
+                \override TextScript.staff-padding = #4
+            }
+            {
+                \context Voice = "Voice 1"
+                \with
+                {
+                    \consists Horizontal_bracket_engraver
+                    \override HorizontalBracket.staff-padding = #3
+                    \override TextScript.staff-padding = #2
+                }
+                {
+                    {
+                        % [Voice 1 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \once \override Stem.direction = #up
+                        \clef "treble"
+                        \change Staff = "Staff 2"
+                        \ottava #-1
+                        c,,4
+                        ^ \markup { \translate #'(6 . 0) m2 }
+                        \once \override Stem.direction = #up
+                        \change Staff = "Staff 2"
+                        cs,,4
+                        ^ \markup { \translate #'(6 . 0) M3 }
+                        \once \override Stem.direction = #up
+                        \change Staff = "Staff 2"
+                        f,,4
+                        ^ \markup { \translate #'(6 . 0) P4 }
+                        \once \override Stem.direction = #up
+                        \change Staff = "Staff 2"
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        bf,,4
+						- \tweak color #red
+						^ \markup { 1 }
+                        ^ \markup { \translate #'(6 . 0) M6 }
+						- \tweak color #red
+                        ^ \markup {
+                            \large
+                                \line
+                                    {
+                                        "SC(6-17){0, 1, 2, 4, 7, 8}"
+                                    }
+                            }
+						- \tweak color #red
+                        \startGroup
+                    }
+                    {
+                        \once \override Stem.direction = #up
+                        \change Staff = "Staff 2"
+                        \ottava #0
+                        \tweak color #red
+                        g,4
+						- \tweak color #red
+						^ \markup { 4 }
+                        ^ \markup { \translate #'(6 . 0) "M2" }
+                        \once \override Stem.direction = #up
+                        \change Staff = "Staff 2"
+                        \tweak color #red
+                        a,4
+						- \tweak color #red
+						^ \markup { 2 }
+                        ^ \markup { \translate #'(6 . 0) P5 }
+                        \once \override Stem.direction = #up
+                        \change Staff = "Staff 2"
+                        \tweak color #red
+                        e4
+						- \tweak color #red
+						^ \markup { 7 }
+                        ^ \markup { \translate #'(6 . 0) M7 }
+                        \once \override Stem.direction = #down
+                        \change Staff = "Staff 1"
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        ef'4
+						- \tweak color #red
+						^ \markup { 8 }
+                        ^ \markup { \translate #'(6 . 0) m6 }
+                        \once \override Stem.direction = #down
+                        \change Staff = "Staff 1"
+                        \tweak color #red
+                        b'4
+                        ^ \markup { \translate #'(6 . 0) m3 }
+						- \tweak color #red
+						^ \markup { 0 }
+                        \stopGroup
+                        \once \override Stem.direction = #down
+                        \change Staff = "Staff 1"
+                        d''4
+                        ^ \markup { \translate #'(6 . 0) d5 }
+                        \once \override Stem.direction = #down
+                        \change Staff = "Staff 1"
+                        af''4
+                        ^ \markup { \translate #'(6 . 0) m7 }
+                        \once \override Stem.direction = #down
+                        \change Staff = "Staff 1"
+                        fs'''4
+                    }
+                }
+            }
+            \context Staff = "Staff 2"
+            \with
+            {
+                \consists Horizontal_bracket_engraver
+                \override TextScript.staff-padding = #4
+            }
+            {
+                \context Voice = "Voice 2"
+                \with
+                {
+                    \consists Horizontal_bracket_engraver
+                    \override HorizontalBracket.staff-padding = #3
+                    \override TextScript.staff-padding = #2
+                }
+                {
+                    {
+                        % [Voice 2 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \clef "bass"
+                        r1
+                    }
+                    {
+                        r\breve
+                    }
+                }
+            }
+        >>
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+The Link chords are a set of all-interval, twelve-note chords with a contiguous statement of the all-trichord hexachord\footnote{ATH} somewhere within it.\cite{carter} It was originally calculated by music theorist John F. Link. Initially, I intended to treat the all-trichord hexachord within my sonority combinatorially, but as stated previously, this was abandoned due to the expansion of the ensemble. The following image is the ATH in the ascending reduced form of (012478) beginning on middle C.\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/harmony/first_stylesheet_2.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+        }
+            \context Staff = "Staff 1"
+            \with
+            {
+                \consists Horizontal_bracket_engraver
+                \override TextScript.staff-padding = #4
+            }
+            {
+                \context Voice = "Voice 1"
+                \with
+                {
+                    \consists Horizontal_bracket_engraver
+                    \override HorizontalBracket.staff-padding = #3
+                    \override TextScript.staff-padding = #2
+                }
+                {
+                    {
+                        % [Voice 1 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \once \override Stem.direction = #up
+                        \clef "treble"
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        c'4
+                        - \tweak color #red
+                        ^ \markup {
+                            \large
+                                \line
+                                    {
+                                        "SC(6-17){0, 1, 2, 4, 7, 8}"
+                                    }
+                            }
+                        - \tweak color #red
+                        \startGroup
+                        %{ - \tweak color #red
+                        ^ \markup { 0 } %}
+                        \once \override Stem.direction = #up
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        cs'4
+                        %{ - \tweak color #red
+                        ^ \markup { 1 } %}
+                        \once \override Stem.direction = #up
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        d'4
+                        %{ - \tweak color #red
+                        ^ \markup { 2 } %}
+                        \once \override Stem.direction = #up
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        e'4
+						%{ - \tweak color #red
+						^ \markup { 4 } %}
+                    }
+                    {
+                        \once \override Stem.direction = #up
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        g'4
+						%{ - \tweak color #red
+						^ \markup { 7 } %}
+                        \once \override Stem.direction = #up
+                        \tweak NoteHead.color #red
+						\tweak Accidental.color #red
+                        af'4
+						%{ - \tweak color #red
+						^ \markup { 8 } %}
+                        \stopGroup
+                    }
+                }
+            }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+The total combinations of three-note groups reveal the presence of all Forte trichords.\cite{forte} \\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/harmony/first_stylesheet_3.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 1/4
+            s4
+
+            \time 1/4
+            s4
+
+            \time 2/4
+            s2
+
+            \time 2/4
+            s2
+
+            \time 5/4
+            s1
+            s4
+
+            \time 1/4
+            s4
+
+            \time 1/4
+            s4
+
+            \time 2/4
+            s2
+
+            \time 1/4
+            s4
+
+            \time 1/4
+            s4
+
+            \time 2/4
+            s2
+
+            \time 1/4
+            s4
+        }
+            \context Staff = "Staff 1"
+            \with
+            {
+                \consists Horizontal_bracket_engraver
+                \override TextScript.staff-padding = #4
+            }
+            {
+                \context Voice = "Voice 1"
+                \with
+                {
+                    \override TextScript.staff-padding = #2
+                }
+                {
+                    {
+                        % [Voice 1 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \override Stem.direction = #up
+                        \clef "treble"
+                        <c' cs' d'>4
+                        ^\markup{ (012) }
+
+                        <cs' d' e'>4
+                        ^\markup{ (013) }
+
+                        <c' cs' e'>4
+                        ^\markup{ (014) }
+                        <e' g' af'>4
+
+                        <c' cs' af'>4
+                        ^\markup{ (015) }
+                        <c' g' af'>4
+
+                        <c' cs' g'>4
+                        ^\markup{ (016) }
+                        <cs' d' g'>4
+                        <cs' d' af'>4
+                        <cs' g' af'>4
+                        <d' g' af'>4
+
+                        <c' d' e'>4
+                        ^\markup{ (024) }
+
+                        <d' e' g'>4
+                        ^\markup{ (025) }
+
+                        <c' d' af'>4
+                        ^\markup{ (026) }
+                        <d' e' af'>4
+
+                        <c' d' g'>4
+                        ^\markup{ (027) }
+
+                        <cs' e' g'>4
+                        ^\markup{ (036) }
+
+                        <c' e' g'>4
+                        ^\markup{ (037) }
+                        <cs' e' af'>4
+
+                        <c' e' af'>4
+                        ^\markup{ (048) }
+
+                    }
+                }
+            }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+Because these trichords are derived from the ATH, each can be paired with a complementary trichord to complete the full ATH. \\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/harmony/first_stylesheet_4.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 2/4
+            s2
+
+        }
+            \context Staff = "Staff 1"
+            \with
+            {
+                \consists Horizontal_bracket_engraver
+                \override TextScript.staff-padding = #4
+            }
+            {
+                \context Voice = "Voice 1"
+                \with
+                {
+                    \override TextScript.staff-padding = #2
+                }
+                {
+                    {
+                        % [Voice 1 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \override Stem.direction = #up
+                        \clef "treble"
+                        <c' cs' d'>4
+                        ^\markup{ (012) \teeny \fraction 1 1}
+                        <e' g' af'>4
+                         ^\markup{ (014) \teeny \fraction 2 2}
+
+                        <cs' d' e'>4
+                        ^\markup{ (013) \teeny \fraction 1 1}
+                        <c' g' af'>4
+                        ^\markup{ (015) \teeny \fraction 2 2}
+
+                        <c' cs' e'>4
+                        ^\markup{ (014) \teeny \fraction 1 2}
+                        <d' g' af'>4
+                        ^\markup{ (016) \teeny \fraction 5 5}
+
+                        <c' cs' af'>4
+                        ^\markup{ (015) \teeny \fraction 1 2}
+                        <d' e' g'>4
+                        ^\markup{ (025) \teeny \fraction 1 1}
+
+                        <c' cs' g'>4
+                        ^\markup{ (016) \teeny \fraction 1 5}
+                        <d' e' af'>4
+                        ^\markup{ (026) \teeny \fraction 2 2}
+
+                        <cs' d' g'>4
+                        ^\markup{ (016) \teeny \fraction 2 5}
+                        <c' e' af'>4
+                        ^\markup{ (048) \teeny \fraction 1 1}
+
+                        <cs' d' af'>4
+                        ^\markup{ (016) \teeny \fraction 3 5}
+                        <c' e' g'>4
+                        ^\markup{ (037) \teeny \fraction 1 2}
+
+                        <cs' g' af'>4
+                        ^\markup{ (016) \teeny \fraction 4 5}
+                        <c' d' e'>4
+                        ^\markup{ (024) \teeny \fraction 1 1}
+
+                        <c' d' af'>4
+                        ^\markup{ (026) \teeny \fraction 1 2}
+                        <cs' e' g'>4
+                        ^\markup{ (036) \teeny \fraction 1 1}
+
+                        <c' d' g'>4
+                        ^\markup{ (027) \teeny \fraction 1 1}
+                        <cs' e' af'>4
+                        ^\markup{ (037) \teeny \fraction 2 2}
+
+                    }
+                }
+            }
+    >>
+} %! LilyPondFile
+\end{lilypond}
+\section{Formal Structures in \textit{GUERRERO}}
+\par In line with my ideas of how musical material could behave like light, I wanted to explore auditory mirages. I wanted to move smoothly between a number of musical textures in a progression I found satisfying, but in a way that was also subtle. I started with the global form of the piece, constructing a pattern of segments and selecting what kind of material should develop within them. After this, I organized a more local pattern of timespans\footnote{See chapter two for diagrams of these timespans.} during which the material would be performed. Each of these timespans were tagged with the name of a music generator I had written and Abjad populated these timespans with material created by my generators.
+\par I chose to gradually move from a very ambiguous state to something with more clarity and back toward ambiguity, but not all the way back to the original state. The point of greatest ambiguity in \textit{GUERRERO} is at the beginning. The orchestrational timespan pattern of this passage is meant to reference a Shepard tone,\cite{lee} an auditory illusion of infinite motion. The piece opens with an ``Invocation'' featuring an ascending quarter-tone scale performed as a glissando. The octave is never reached because the scale begins anew once it arrives one quarter step away from the octave. No satisfying harmonic consistency is established and the orchestration potentially gives the illusion of the Shepard tone's endless motion. \\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet_4.ily"                                      %! LilyPondFile
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score{
+	    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            \mark \markup {
+                \bold
+                    {
+                        Invocation
+                    }
+                }
+            s1 * 5/4
+            % [Global Context measure 2] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 3] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 4] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            % [Global Context measure 5] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 6] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 7] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 8] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 9] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            % [Global Context measure 10] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 11] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 12] %! COMMENT_MEASURE_NUMBERS
+            \time 9/8
+            s1 * 9/8
+        }
+        \context Staff = "Staff 9"
+        {
+            \context Voice = "Voice 9"
+            {
+                {
+                    \times 4/5 {
+                        % [Voice 9 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \set Staff.shortInstrumentName =
+                        \markup { alt.5 }
+                        \set Staff.instrumentName =
+                        \markup { "Alto 5" }
+                        \tempo 4=60
+                        cs'16
+                        \mp
+                        - \tweak stencil #abjad-flared-hairpin
+                        \<
+                        \glissando
+                        dqf'4
+                        ~
+                    }
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 8/7 {
+                        dqf'16
+                        [
+                        \glissando
+                        d'8
+                        ~
+                        d'16
+                        \glissando
+                        dqs'16
+                        ~
+                        dqs'16
+                        \glissando
+                        ef'16
+                        \ff
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                }
+                {
+                    r2
+                    \!
+                }
+                {
+                    % [Voice 9 measure 2] %! COMMENT_MEASURE_NUMBERS
+                    eqf'8.
+                    \mp
+                    - \tweak stencil #abjad-flared-hairpin
+                    \<
+                    [
+                    \glissando
+                    e'16
+                    \glissando
+                    eqs'16
+                    \glissando
+                    f'16
+                    \glissando
+                    fqs'8
+                    ~
+                    \times 4/5 {
+                        fqs'8.
+                        \glissando
+                        fs'8
+                        \ff
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                }
+                {
+                    r4
+                    \!
+                }
+                {
+                    % [Voice 9 measure 3] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    \times 2/3 {
+                        % [Voice 9 measure 4] %! COMMENT_MEASURE_NUMBERS
+                        gqf'8
+                        \mf
+
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                        r8
+                        \!
+                        g'8
+                        \mf
+                        \<
+                        ~
+                        [
+                    }
+                    g'8
+                    ]
+                    \glissando
+                    gqs'4.
+                    \f
+
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    r2
+                    \!
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 8/7 {
+                        % [Voice 9 measure 5] %! COMMENT_MEASURE_NUMBERS
+                        af'16
+                        \mp
+                        - \tweak stencil #abjad-flared-hairpin
+                        \<
+                        [
+                        \glissando
+                        aqf'8
+                        ]
+                        \glissando
+                        a'4
+                        \glissando
+                    }
+                    aqs'16
+                    [
+                    \glissando
+                    bf'16
+                    \glissando
+                    bqf'16
+                    \glissando
+                    b'16
+                    \ff
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                }
+                {
+                    r4
+                    \!
+                }
+                {
+                    % [Voice 9 measure 6] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 9 measure 7] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 9 measure 8] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                }
+                {
+                    bqs'4
+                    \mf
+
+                    \<
+                    \glissando
+                    c''4.
+                    \f
+                    - \tenuto
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                    r8
+                    \!
+                }
+                {
+                    % [Voice 9 measure 9] %! COMMENT_MEASURE_NUMBERS
+                    r2
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        cqs''4
+                        \mf
+
+                        \<
+                        cs'8
+                        ~
+                    }
+                    cs'4
+                    \f
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    % [Voice 9 measure 10] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                    \!
+                }
+                {
+                    % [Voice 9 measure 11] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                }
+                {
+                    \times 4/5 {
+                        dqf'4
+                        \mp
+                        - \tweak stencil #abjad-flared-hairpin
+                        \<
+                        \glissando
+                        d'16
+                        ~
+                        [
+                    }
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        d'8
+                        \glissando
+                        dqs'16
+                        ~
+                    }
+                    dqs'16
+                    \glissando
+                    ef'8.
+                    \ff
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                }
+                {
+                    % [Voice 9 measure 12] %! COMMENT_MEASURE_NUMBERS
+                    r2
+                    \!
+                }
+                {
+                    eqf'2
+                    \mf
+                    \<
+                    r8
+                    \!
+                    \bar "||"
+                }
+            }
+        }
+    >>
+
+}
+\end{lilypond} \\
+\par The cascading rhythms of the Invocation are created from two taleas, which are cyclic rhythm patterns that develop independently of harmonic material that originated in music of the middle ages.\cite{burkholder} \\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet_4.ily"                                      %! LilyPondFile
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score{
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            \mark \markup {
+                \bold
+                    {
+                        Invocation
+                    }
+                }
+            s1 * 5/4
+            % [Global Context measure 2] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 3] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 4] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            % [Global Context measure 5] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 6] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 7] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 8] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 9] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            % [Global Context measure 10] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 11] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 12] %! COMMENT_MEASURE_NUMBERS
+            \time 9/8
+            s1 * 9/8
+        }
+        \context Staff = "Staff 1"
+        {
+            \context Voice = "Voice 1"
+            {
+                {
+                    % [Voice 1 measure 1] %! COMMENT_MEASURE_NUMBERS
+                    \set Staff.shortInstrumentName =
+                    \markup { spro. }
+                    \set Staff.instrumentName =
+                    \markup { Sopranino }
+                    \tempo 4=60
+                    d''16
+                    \mp
+                    - \tweak stencil #abjad-flared-hairpin
+                    \<
+                    [
+                    \glissando
+                    dqs''16
+                    \glissando
+                    ef''16
+                    \glissando
+                    eqf''16
+                    ~
+                    ]
+                    eqf''4
+                    \glissando
+                    \times 4/5 {
+                        e''8.
+                        [
+                        \glissando
+                        eqs''8
+                        \ff
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                }
+                {
+                    r2
+                    \!
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 8/7 {
+                        % [Voice 1 measure 2] %! COMMENT_MEASURE_NUMBERS
+                        f''4
+                        \mp
+                        - \tweak stencil #abjad-flared-hairpin
+                        \<
+                        \glissando
+                        fqs''16
+                        [
+                        \glissando
+                        fs''16
+                        \glissando
+                        gqf''16
+                        ]
+                        \glissando
+                    }
+                    g''4
+                    \ff
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    r4
+                    \!
+                }
+                {
+                    % [Voice 1 measure 3] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 1 measure 4] %! COMMENT_MEASURE_NUMBERS
+                    gqs''2
+                    \mf
+                    \<
+                    ~
+                    gqs''8
+                    [
+                    \glissando
+                    af''8
+                    \f
+                    - \tenuto
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                }
+                {
+                    r2
+                    \!
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 1 measure 5] %! COMMENT_MEASURE_NUMBERS
+                        aqf''16
+                        \mp
+                        - \tweak stencil #abjad-flared-hairpin
+                        \<
+                        [
+                        \glissando
+                        a''8
+                        ~
+                        a''16
+                        \glissando
+                        aqs''16
+                        ~
+                    }
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 8/7 {
+                        aqs''16
+                        ]
+                        \glissando
+                        bf''4
+                        \glissando
+                        bqf''16
+                        [
+                        \glissando
+                        b''16
+                        \ff
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                }
+                {
+                    r4
+                    \!
+                }
+                {
+                    % [Voice 1 measure 6] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 1 measure 7] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 1 measure 8] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 6/5 {
+                        bqs''4
+                        \mf
+
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                        r8
+                        \!
+                        c'''4
+                        \f
+
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                    }
+                }
+                {
+                    % [Voice 1 measure 9] %! COMMENT_MEASURE_NUMBERS
+                    r2
+                    \!
+                }
+                {
+                    \times 4/5 {
+                        cqs'''2
+                        \mf
+
+                        \<
+                        \glissando
+                        cs'''8
+                        ~
+                    }
+                    cs'''4
+                    \f
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    % [Voice 1 measure 10] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                    \!
+                }
+                {
+                    % [Voice 1 measure 11] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                }
+                {
+                    dqf'''16
+                    \mp
+                    - \tweak stencil #abjad-flared-hairpin
+                    \<
+                    [
+                    d''8.
+                    ~
+                    d''8
+                    \glissando
+                    dqs''8
+                    ~
+                    \times 4/5 {
+                        dqs''16
+                        \glissando
+                        ef''8
+                        \glissando
+                        eqf''8
+                        \ff
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                }
+                {
+                    % [Voice 1 measure 12] %! COMMENT_MEASURE_NUMBERS
+                    r2
+                    \!
+                }
+                {
+                    r4
+                    e''8
+                    \mf
+
+                    ~
+                    [
+                    e''8
+                    \<
+                    \glissando
+                    eqs''8
+                    \f
+                    - \tenuto
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \bar "||"
+                }
+            }
+        }
+    >>
+}
+\end{lilypond} \\
+\par Harmonically, the quarter-tone scale is applied to all notes in both taleas.\footnote{The plural form of talea is actually ``taleae,'' but it is the convention in Abjad to use the more convenient, anglicized plural ``taleas.''} The cyclic rhythmic patterns of the first and second talea are \( \frac{1}{16} \), \( \frac{1}{16} \), \( \frac{1}{16} \), \( \frac{5}{16} \), \( \frac{3}{16} \), \( \frac{2}{16} \), \( \frac{4}{16} \),\footnote{Where \( \frac{1}{16} \) refers to one sixteenth note and \( \frac{1}{8} \) refers to one eighth note etc.} and \( \frac{4}{8} \), \( \frac{3}{8} \), \( -\frac{1}{8} \), \( \frac{2}{8} \) respectively. Negative fractions represent a duration that is always written as a rest. Another important concept taken from ancient music is that of prolation. The term prolation is take from the Latin \textit{Prolatio} coined by Philippe de Vitry.\cite{burkholder} With the coming of the Ars Nova, came new resources in music notation. For the first time, there was very little ambiguity in how rhythms should be performed. With this new notation came new terminology to describe the surface of the new music. \textit{Modus} refers to the division of the long, \textit{tempus} refers to the division of the breve, and the division of the semibreve was called \textit{prolatio}. At this point, this was the lowest level of division possible. With perfect or imperfect divisions, these layers of time could be divided into groups of three or groups of two. Now, the modern, more general use of the term \textit{prolation} refers to the depth of division of temporal units of music. Tuplets with fractions of the same ratio are said to have the same prolation, thus the duration of a given rhythm within a tuplet of 3:2 is temporally equivalent the duration of the same rhythm written inside of a bracket of 9:6. Unlike the Ars Nova, there is no restriction to divisions of three and two in modern music. At will, composers may use divisions of any number they choose. The following is an example talea of \( \frac{1}{16} \), \( \frac{2}{16} \), \( \frac{3}{16} \), and \( \frac{4}{16} \).\footnote{The Abjad tools used to produce the following three examples are Trevor Ba\v{c}a's \textit{rmakers}. They are described in great detail on the Abjad website as well as in Josiah Oberholtzer's dissertation \textit{A Computational Model of Music Composition}.}\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/default.ily"           %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/talea/stylesheet_4.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \new GlobalContext
+        {
+            \time 3/8
+            s1 * 3/8
+            \time 4/8
+            s1 * 1/2
+            \time 3/8
+            s1 * 3/8
+            \time 4/8
+            s1 * 1/2
+        }
+        \new RhythmicStaff
+        {
+            c'16
+            [
+            c'8
+            c'8.
+            ]
+            c'4
+            c'16
+            [
+            c'8
+            c'16
+            ~
+            ]
+            c'8
+            c'4
+            c'16
+            [
+            c'8
+            c'8.
+            c'8
+            ]
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+A cycle of tuplet brackets is applied to each timespan containing rhythmic material. Portions of the defined durations are shifted over to fit inside of the newly prolated container.\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/default.ily"           %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/talea/stylesheet_4.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \new GlobalContext
+        {
+            \time 3/8
+            s1 * 3/8
+            \time 4/8
+            s1 * 1/2
+            \time 3/8
+            s1 * 3/8
+            \time 4/8
+            s1 * 1/2
+        }
+        \new RhythmicStaff
+        {
+            \tweak text #tuplet-number::calc-fraction-text
+            \times 1/1 {
+                c'16
+                [
+                c'8
+                c'8.
+                ]
+            }
+            \times 8/9 {
+                c'4
+                c'16
+                [
+                c'8
+                c'8
+                ~
+                ]
+            }
+            \tweak text #tuplet-number::calc-fraction-text
+            \times 6/5 {
+                c'16
+                c'4
+            }
+            \tweak text #tuplet-number::calc-fraction-text
+            \times 1/1 {
+                c'16
+                [
+                c'8
+                c'8.
+                c'8
+                ]
+            }
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+The brackets are then respelled in a way that redundant tuplets are removed.\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/default.ily"           %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/talea/stylesheet_4.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \new GlobalContext
+        {
+            \time 3/8
+            s1 * 3/8
+            \time 4/8
+            s1 * 1/2
+            \time 3/8
+            s1 * 3/8
+            \time 4/8
+            s1 * 1/2
+        }
+        \new RhythmicStaff
+        {
+            c'16
+            [
+            c'8
+            c'8.
+            ]
+            \times 8/9 {
+                c'4
+                c'16
+                [
+                c'8
+                c'8
+                ~
+                ]
+            }
+            \tweak text #tuplet-number::calc-fraction-text
+            \times 6/5 {
+                c'16
+                c'4
+            }
+            c'16
+            [
+            c'8
+            c'8.
+            c'8
+            ]
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+The fraction of the bracket is calculated based on the duration of the timespan, but these fractions are written as pure prolations. This means that a tuplet that could be written as 9:6 is always written in a reduced form of 3:2. Thus the following passage\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/default.ily"           %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/talea/stylesheet_4.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \new GlobalContext
+        {
+            \time 3/16
+            s1 * 3/16
+        }
+        \new RhythmicStaff
+        {
+                            \tweak TupletNumber.text #(tuplet-number::append-note-wrapper(tuplet-number::non-default-tuplet-fraction-text 9 6) "32")
+                            \times 2/3 {
+                                % [Voice 1 measure 2] %! COMMENT_MEASURE_NUMBERS
+                                \once \override Staff.NoteHead.style = #'default
+                                \clef "varC"
+                                c8
+                                c8 ~
+                                c32
+                                ]
+                            }
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+would be rewritten as this\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/default.ily"           %! LilyPondFile
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/talea/stylesheet_4.ily"
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score { %! LilyPondFile
+    \new Score
+    <<
+        \new GlobalContext
+        {
+            \time 3/16
+            s1 * 3/16
+        }
+        \new RhythmicStaff
+        {
+                            \tweak TupletNumber.text #(tuplet-number::non-default-tuplet-fraction-text 3 2)
+                            \times 2/3 {
+                                % [Voice 1 measure 2] %! COMMENT_MEASURE_NUMBERS
+                                \once \override Staff.NoteHead.style = #'default
+                                \clef "varC"
+                                c8
+                                c8 ~
+                                c32
+                                ]
+                            }
+        }
+    >>
+} %! LilyPondFile
+\end{lilypond} \\
+instead. The tuplet bracket cycle applied to the first talea in the Invocation passage of \textit{GUERRERO} is 0, 1, -1, where 0 represents no change in prolation, 1 represents an augmentation, and -1 represents a diminution. The tuplet bracket cycle applied to the second talea is -1, 0, -1, 1, 0.
+\par Each talea is assigned unique dynamic trajectories. The first trajectory is a sudden swell from mezzo piano to fortissimo and the second trajectory is a smooth crescendo from mezzo forte to forte. Example. Originally, every note that is part of the first talea was given a tenuto marking. The second talea's  cycle is one tenuto followed by four notes without articulations. In the final version of the piece, only the second talea's articulation cycle is present.
+\par This kind of process is characteristic of each section of \textit{GUERRERO}: a rhythmic process is grouped with a pitch process, dynamic trajectory, and articulation pattern. These units alternate and interrupt each other. Each section was composed in isolation,\footnote{Evidence of this can be seen in the timespan patterns in chapter two.} so these processes remain restricted to their respective segment.\footnote{In Abjad lingo, the word segment refers to a passage of music that was composed in isolation from any other passage. Though not required, these segments often take shape as separate files that are stitched together in Lilypond to produce the final score.} As the piece progresses, some segments appear that act as a recapitulation of previous material in a significantly varied form. For instance, section H reiterates the Shepard tone theme, this time with slower rhythms and a significant element of noise.
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet_4.ily"                                      %! LilyPondFile
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score{
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            \mark \markup {
+                \bold
+                    {
+                        H
+                    }
+                }
+            s1 * 5/4
+            % [Global Context measure 2] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 3] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 4] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            % [Global Context measure 5] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 6] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 7] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 8] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 9] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+            % [Global Context measure 10] %! COMMENT_MEASURE_NUMBERS
+            \time 3/4
+            s1 * 3/4
+            % [Global Context measure 11] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 12] %! COMMENT_MEASURE_NUMBERS
+            \time 5/4
+            s1 * 5/4
+        }
+        \context Staff = "Staff 17"
+        {
+            \context Voice = "Voice 17"
+            {
+                {
+                    % [Voice 17 measure 1] %! COMMENT_MEASURE_NUMBERS
+                    \set Staff.shortInstrumentName =
+                    \markup { bar.2 }
+                    \set Staff.instrumentName =
+                    \markup { "Baritone 2" }
+                    \tempo 4=60
+                    bf8
+                    \mp
+                    - \halfopen
+                    \<
+                    [
+                    \!
+                    bqf8
+
+                    \times 2/3 {
+                        b8
+                        - \stopped
+                        ]
+                        bqs4
+                        ~
+                    }
+                    bqs4
+                    \mf
+                    - \tweak stencil #constante-hairpin
+                    \<
+                }
+                {
+                    r2
+                    \!
+                }
+                {
+                    % [Voice 17 measure 2] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                    \times 4/5 {
+                        r4.
+                        c'4
+                        \mf
+                        - \halfopen
+                        - \tweak stencil #constante-hairpin
+                        \<
+                    }
+                }
+                {
+                    r4
+                    \!
+                }
+                {
+                    % [Voice 17 measure 3] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 17 measure 4] %! COMMENT_MEASURE_NUMBERS
+                    cqs'2.
+                    \mf
+                    \>
+                }
+                {
+                    r2
+                    \!
+                }
+                {
+                    % [Voice 17 measure 5] %! COMMENT_MEASURE_NUMBERS
+                    cs'2
+                    \mp
+                    \<
+                    ~
+                    cs'8
+                    [
+                    dqf'8
+                    \mf
+                    - \stopped
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                }
+                {
+                    r4
+                    \!
+                }
+                {
+                    % [Voice 17 measure 6] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 17 measure 7] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 17 measure 8] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                }
+                {
+                    r2
+                    d'4
+                    \p
+                    - \flageolet
+                    - \tweak stencil #constante-hairpin
+                    \<
+                }
+                \break
+                {
+                    % [Voice 17 measure 9] %! COMMENT_MEASURE_NUMBERS
+                    r2
+                    \!
+                }
+                {
+                    dqs'4
+                    \mf
+                    \>
+                    ~
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        dqs'8
+                        [
+                        ef'8
+                        \p
+                        - \flageolet
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        r8
+                        \!
+                    }
+                }
+                {
+                    % [Voice 17 measure 10] %! COMMENT_MEASURE_NUMBERS
+                    r2.
+                }
+                {
+                    % [Voice 17 measure 11] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                }
+                {
+                    \times 4/5 {
+                        eqf'8
+                        \mp
+                        - \halfopen
+                        \<
+                        [
+                        e'8
+
+                        ]
+                        eqs'4.
+                        ~
+                    }
+                    eqs'4
+                    \mf
+                    - \tweak stencil #constante-hairpin
+                    \<
+                }
+                {
+                    % [Voice 17 measure 12] %! COMMENT_MEASURE_NUMBERS
+                    r2
+                    \!
+                }
+                {
+                    r2
+                    f'8
+                    \mf
+
+                    - \tweak stencil #constante-hairpin
+                    \<
+                }
+                {
+                    r8
+                    \!
+                    \bar "||"
+                }
+            }
+        }
+    >>
+}
+\end{lilypond}
+\section{Processes in the Remaining Sections of \textit{GUERRERO}}
+\par In section A, the fundamental harmony of Link-Chord \#23 begins to appear, albeit in a highly distorted form. I had originally planned to emphasize a specific note in each of the twenty-one instruments. While this is not present in the final version of the piece, there remains a trace of that original design. When the fundamental harmony is voiced across the ensemble, those instruments that are assigned a note from the all-trichord hexachord are also assigned multiphonics. These multiphonics and their fingerings were taken from the B\"arenreiter book \textit{Die Spieltechnik des Saxophons}.\cite{saxophone} I originally approximated the sounding pitches of the multiphonics to quarter-tones, but eventually I settled on an eighth-tone approximation. These specific multiphonics were chosen because they contained literal pitches from the fundamental harmony and therefore usually contained members of the all-trichord hexachord within Link chord \#23, or pitches that were close approximations. Exact pitches from Link chord \#23 are highlighted in green, while approximate pitches are highlighted in blue. Some of these multiphonics also contain extraneous pitches and they are notated in black.\\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"
+\language "english"
+
+#(set-default-paper-size "letterportrait")
+#(set-global-staff-size 10)
+%#(print-keys-verbose 'baritone-saxophone (current-error-port))
+
+\include "ekmel.ily"
+\ekmelicStyle evans
+
+% \layout {
+%     indent = #0}
+
+\relative c' {
+  \textLengthOn
+  <
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  dtef'
+  \tweak NoteHead.color #darkgreen \tweak Accidental.color #darkgreen
+  e
+  des'>1\ff_
+  \markup {
+    \center-column {
+      soprano 1
+      " "
+		\override #'(size . 0.4)
+		%\override #'(thickness . 0.15)
+       \woodwind-diagram
+                  #'soprano-saxophone
+                   #'(
+			(cc . (one two three four six))
+			(lh . (ees d))
+			(rh . (low-c))
+			)
+    }
+  }
+
+  \textLengthOn
+  <
+  \tweak NoteHead.color #darkgreen \tweak Accidental.color #darkgreen
+  cs
+  dtes
+  des' >1\f_
+  \markup {
+    \center-column {
+      soprano 2
+      " "
+		\override #'(size . 0.4)
+       \woodwind-diagram
+                  #'soprano-saxophone
+                   #'(
+			(cc . (one two three four six))
+			(lh . (ees d b))
+			(rh . (low-c))
+			)
+    }
+  }
+
+  \textLengthOn
+  <
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  ctes
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  eqf
+  d'>1\f_
+  \markup {
+    \center-column {
+      soprano 3
+      " "
+		\override #'(size . 0.4)
+       \woodwind-diagram
+                  #'soprano-saxophone
+                   #'(
+			(cc . (one two three four five))
+			(lh . (ees d))
+			(rh . (low-c))
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  cqs
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  g'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  eef'
+  bf'>1\ff_
+  \markup {
+    \center-column {
+      alto 1
+      " "
+		\override #'(size . 0.4)
+       \woodwind-diagram
+                  #'alto-saxophone
+                   #'(
+			(cc . (one two three))
+			(lh . (d gis))
+			(rh . ())
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  cqs
+  etef
+  dqf' >1\mf_
+  \markup {
+    \center-column {
+       alto 2
+       " "
+		\override #'(size . 0.4)
+       \woodwind-diagram
+          #'alto-saxophone
+        #'(
+			(cc . (one two three four five))
+			(lh . (b))
+			(rh . (low-c c))
+			)
+    }
+  }
+  <
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  def,
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  dqf'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  btef'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  ef
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  fs>1\ff_\markup {
+    \center-column {
+      alto 3
+      " "
+		\override #'(size . 0.4)
+      \woodwind-diagram
+        #'alto-saxophone
+        #'(
+			(cc . (one two three four five six))
+			(lh . (low-bes))
+			(rh . ())
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #darkgreen \tweak Accidental.color #darkgreen
+  fs
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  fqs'>1\mf_\markup {
+    \center-column {
+      tenor 1
+      " "
+		\override #'(size . 0.4)
+      \woodwind-diagram
+        #'tenor-saxophone
+        #'(
+			(cc . (one two three five six))
+			(lh . (cis))
+			(rh . ())
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #darkgreen \tweak Accidental.color #darkgreen
+  fs
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  fqs'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  dqf'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  fs>1\mf_\markup {
+    \center-column {
+      tenor 2
+      " "
+		\override #'(size . 0.4)
+      \woodwind-diagram
+        #'tenor-saxophone
+        #'(
+			(cc . (one two three five six))
+			(lh . (b))
+			(rh . ())
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #darkgreen \tweak Accidental.color #darkgreen
+  fs
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  fqs'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  dqf'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  gef>1\mp_\markup {
+    \center-column {
+      tenor 3
+      " "
+		\override #'(size . 0.4)
+      \woodwind-diagram
+        #'tenor-saxophone
+        #'(
+			(cc . (one two three five six))
+			(lh . ())
+			(rh . ())
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  dtef'
+  eqf'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  ates>1\ff_\markup {
+    \center-column {
+      baritone 1
+      " "
+		\override #'(size . 0.4)
+      \woodwind-diagram
+        #'baritone-saxophone
+        #'(
+			(cc . (one two three))
+			(lh . (ees d gis))
+			(rh . ())
+			)
+    }
+  }
+
+  <
+  \tweak NoteHead.color #darkgreen \tweak Accidental.color #darkgreen
+  e,
+  eqs'
+  \tweak NoteHead.color #blue \tweak Accidental.color #blue
+  bqs'>1\mf_\markup {
+    \center-column {
+      baritone 2
+      " "
+		\override #'(size . 0.4)
+      \woodwind-diagram
+        #'baritone-saxophone
+        #'(
+			(cc . (one two three four five))
+			(lh . (b))
+ 			(rh . (low-c))
+ 			)
+     }
+   }
+
+   <
+   \tweak NoteHead.color #blue \tweak Accidental.color #blue
+   gtes
+   ftes'
+   dqf'
+   \tweak NoteHead.color #blue \tweak Accidental.color #blue
+   bf'>1\ff_\markup {
+     \center-column {
+       baritone 3
+       " "
+ 		\override #'(size . 0.4)
+       \woodwind-diagram
+         #'baritone-saxophone
+         #'(
+ 			(cc . (one two three five six))
+ 			(lh . (low-a))
+ 			(rh . (low-c))
+ 			)
+     }
+   }
+
+ }
+ \end{lilypond} \\
+The rhythmic material for this passage began as a sustained note for the duration of each timespan, but evolved into taleas of long durations in order to keep the rhythmic landscape more amorphous. The passage gradually increases in rhythmic density while clarifying the harmony by reducing the number of multiphonics played.
+\par In Section B, the harmony has almost settled into a recognizable form. The pitches are derived from a musical mapping of Brownian Motion, with each step scaled to a quarter-tone. Brownian Motion, sometimes graphed in the form of a Random Walk, is a description of a chaotic system where particles move in seemingly unpredictable ways. However, when statistically analyzed, this chaotic system will form a normal distribution, one of the most common distributions found in nature. Another characteristic of Brownian Motion is that if any slice of a random walk is analyzed, it still forms a normal distribution. This property often causes Brownian Motion to be considered a fractal model. The shape of these walks is governed by the fact that a physical system is presupposed. Particles cannot teleport from one location to the next. They must first pass through spaces adjacent to their immediate position. In \textit{GUERRERO}, these random walk mappings begin and center around chord tones, but are erratic so that the harmony is still unclear. \\
+\begin{lilypond}[staffsize=9, ragged-right=##t, line-width=5\in, papersize=letter, indent=0]
+\version "2.19.82"  %! LilyPondFile
+\language "english" %! LilyPondFile
+
+\include "/Users/evansdsg2/spectralism_paper/lilypond_examples/stylesheet_4.ily"                                      %! LilyPondFile
+\include "/Users/evansdsg2/abjad/docs/source/_stylesheets/abjad.ily" %! LilyPondFile
+
+\header { %! LilyPondFile
+    tagline = ##f
+} %! LilyPondFile
+
+\layout {}
+
+\paper {}
+
+\score{
+    \new Score
+    <<
+        \context TimeSignatureContext = "Global Context"
+        {
+            % [Global Context measure 1] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            \mark \markup {
+                \bold
+                    {
+                        B
+                    }
+                }
+            s1 * 1
+            % [Global Context measure 2] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 3] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 4] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 5] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 6] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 7] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 8] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 9] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 10] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 11] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 12] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+            % [Global Context measure 13] %! COMMENT_MEASURE_NUMBERS
+            \time 4/4
+            s1 * 1
+        }
+        \context Staff = "Staff 11"
+        {
+            \context Voice = "Voice 11"
+            {
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 1] %! COMMENT_MEASURE_NUMBERS
+                        \set Staff.shortInstrumentName =
+                        \markup { ten.1 }
+                        \set Staff.instrumentName =
+                        \markup { "Tenor 1" }
+                        \tempo 4=90
+                        r8
+                        \!
+                        f''16
+                        \mf
+                        ~
+                        [
+                        f''16
+                        \>
+                        \glissando
+                        eqs''16
+                        ~
+                    }
+                    eqs''16
+                    \glissando
+                    f''8.
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        fqs''8
+                        \mp
+                        \<
+                        \glissando
+                        f''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                    r16
+                    \!
+                    fqs''16
+                    \mp
+                    ~
+                    [
+                    fqs''16
+                    \<
+                    \glissando
+                    fs''16
+                    \glissando
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 2] %! COMMENT_MEASURE_NUMBERS
+                        fqs''16
+                        \glissando
+                        fs''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r8.
+                        \!
+                    }
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        r16
+                        gqf''16
+                        \mf
+                        \>
+                        [
+                        \glissando
+                        g''16
+                        \glissando
+                    }
+                    \times 4/5 {
+                        gqf''16
+                        \glissando
+                        fs''16
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                        r16
+                        fqs''16
+                        \mf
+                        \>
+                        ~
+                        [
+                    }
+                    fqs''16
+                    \glissando
+                    fs''16
+                    \glissando
+                    gqf''8
+                    \glissando
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        % [Voice 11 measure 3] %! COMMENT_MEASURE_NUMBERS
+                        fs''16
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r8
+                        \!
+                    }
+                }
+                {
+                    r16
+                    gqf''16
+                    \mp
+                    ~
+                    [
+                    gqf''16
+                    \<
+                    \glissando
+                    g''16
+                    \f
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                    r4
+                    \!
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        gqs''16
+                        \mp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                        r16
+                        \!
+                        af''16
+                        \mp
+                        \<
+                        [
+                        \glissando
+                    }
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 4] %! COMMENT_MEASURE_NUMBERS
+                        gqs''8
+                        \glissando
+                        g''16
+                        \glissando
+                        gqs''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                    }
+                }
+                {
+                    r8.
+                    g''16
+                    \mf
+                    \>
+                    [
+                    \glissando
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        gqf''16
+                        \glissando
+                        fs''16
+                        \glissando
+                        fqs''16
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                    r16
+                    \!
+                    f''16
+                    \mf
+                    ~
+                    [
+                    f''16
+                    \>
+                    \glissando
+                    eqs''16
+                    ~
+                }
+                \break
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 5] %! COMMENT_MEASURE_NUMBERS
+                        eqs''16
+                        \glissando
+                        f''16
+                        \glissando
+                        fqs''16
+                        \pp
+                        ~
+                        fqs''16
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                    }
+                    fs''4
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    \times 4/5 {
+                        fqs''8
+                        \mp
+                        \<
+                        [
+                        \glissando
+                        fs''16
+                        ~
+                        fs''16
+                        \glissando
+                        fqs''16
+                        ~
+                    }
+                    fqs''8
+                    \glissando
+                    f''8
+                    \f
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        % [Voice 11 measure 6] %! COMMENT_MEASURE_NUMBERS
+                        r16
+                        \!
+                        fqs''16
+                        \mp
+                        \<
+                        [
+                        \glissando
+                        fs''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                    r4
+                    \!
+                }
+                {
+                    \times 4/5 {
+                        gqf''8.
+                        \mf
+                        \>
+                        [
+                        \glissando
+                        g''16
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                    }
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        gqf''16
+                        \mf
+                        \>
+                        [
+                        \glissando
+                        fs''16
+                        \glissando
+                        fqs''16
+                        \glissando
+                    }
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 7] %! COMMENT_MEASURE_NUMBERS
+                        f''8
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                        r16
+                        fqs''16
+                        \mf
+                        \>
+                        [
+                        \glissando
+                    }
+                    f''8
+                    \glissando
+                    fqs''16
+                    \glissando
+                    f''16
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        fqs''8
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                    }
+                    r16
+                    fs''16
+                    \mp
+                    ~
+                    [
+                    fs''16
+                    \<
+                    \glissando
+                    fqs''16
+                    ~
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 8] %! COMMENT_MEASURE_NUMBERS
+                        fqs''8
+                        \glissando
+                        f''16
+                        ~
+                        f''16
+                        \glissando
+                        fqs''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                    }
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        f''16
+                        \mf
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r8
+                        \!
+                    }
+                    \times 4/5 {
+                        fqs''16
+                        \mf
+                        \>
+                        [
+                        \glissando
+                        f''16
+                        \glissando
+                        eqs''16
+                        \glissando
+                        f''8
+                        ~
+                    }
+                    f''16
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                    r16
+                    \!
+                    fqs''16
+                    \mf
+                    \>
+                    [
+                    \glissando
+                    f''16
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                }
+                \break
+                {
+                    % [Voice 11 measure 9] %! COMMENT_MEASURE_NUMBERS
+                    r4
+                    \!
+                    eqs''16
+                    \mp
+                    \<
+                    [
+                    \glissando
+                    e''16
+                    \f
+                    ~
+                    e''16
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                    r16
+                    \!
+                }
+                {
+                    \times 4/5 {
+                        r8
+                        eqs''16
+                        \mf
+                        \>
+                        [
+                        \glissando
+                        f''8
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                    }
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        eqs''16
+                        \mp
+                        \<
+                        \glissando
+                        e''8
+                        \glissando
+                    }
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 10] %! COMMENT_MEASURE_NUMBERS
+                        eqf''8
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r8.
+                        \!
+                    }
+                    ef''8
+                    \mp
+                    \<
+                    [
+                    \glissando
+                    eqf''16
+                    \glissando
+                    ef''16
+                    \f
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    \glissando
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        eqf''8
+                        \mf
+                        \>
+                        \glissando
+                        ef''16
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                    }
+                    r16
+                    \!
+                    dqs''16
+                    \mf
+                    \>
+                    [
+                    \glissando
+                    ef''8
+                    ~
+                }
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 11] %! COMMENT_MEASURE_NUMBERS
+                        ef''16
+                        \glissando
+                        dqs''16
+                        \glissando
+                        ef''16
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                        dqs''16
+                        \mf
+                        \>
+                        [
+                        \glissando
+                    }
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        d''16
+                        \glissando
+                        dqf''8
+                        \pp
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                    }
+                }
+                {
+                    \times 4/5 {
+                        cs''8
+                        \mp
+                        \<
+                        \glissando
+                        dqf''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r8
+                        \!
+                    }
+                    r4
+                }
+                {
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        % [Voice 11 measure 12] %! COMMENT_MEASURE_NUMBERS
+                        d''8
+                        \mp
+                        \<
+                        [
+                        \glissando
+                        dqf''16
+                        ~
+                    }
+                    dqf''16
+                    \glissando
+                    d''8.
+                    \f
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                    \times 4/5 {
+                        r8
+                        \!
+                        dqf''16
+                        \mp
+                        \<
+                        [
+                        \glissando
+                        cs''16
+                        \glissando
+                        dqf''16
+                        ~
+                    }
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        dqf''16
+                        \glissando
+                        d''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        ]
+                        \glissando
+                        r16
+                        \!
+                    }
+                }
+                \break
+                {
+                    \times 4/5 {
+                        % [Voice 11 measure 13] %! COMMENT_MEASURE_NUMBERS
+                        dqf''16
+                        \mp
+                        \<
+                        [
+                        \glissando
+                        d''8
+                        ~
+                        d''16
+                        \glissando
+                        dqf''16
+                        \f
+                        - \tweak stencil #constante-hairpin
+                        \<
+                        \glissando
+                    }
+                }
+                {
+                    cs''16
+                    \mf
+                    \>
+                    \glissando
+                    dqf''16
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                    r16
+                    \!
+                    cs''16
+                    \mf
+                    \>
+                    [
+                    \glissando
+                    \tweak text #tuplet-number::calc-fraction-text
+                    \times 4/3 {
+                        cqs''8
+                        \glissando
+                        c''16
+                        ~
+                    }
+                    c''16
+                    \glissando
+                    bqs'16
+                    \pp
+                    - \tweak stencil #constante-hairpin
+                    \<
+                    ]
+                    \glissando
+                    r8
+                    \!
+                    \bar "||"
+                }
+            }
+        }
+    >>
+}
+\end{lilypond} \\
+\par Section C acts a quick transition between the texture of sections B and D. In this Section, I increase the density of material and introduce the air tones that become prominent later in the piece. Section D is emphasized by a focus on a continuum of pitch and noise. While every pitch in this section is drawn from Link chord\#23, the clarity of its statement is hindered and absorbed by the surrounding noise. The tempo is much faster in this passage, creating a cloud of sound.
+\par Section E has the most prominent statement of the fundamental harmony. Brownian models are mapped not to steps in a scale, but to pitches in the fundamental chord. Some dyads are also isolated as trills. This is the most rhythmically dense passage of the piece, but the harmony is clearest. This Brownian process and trill isolation is continued through Section F although the texture is much thinner. The non-chord tones are derived from the multiphonics and threaten to overcome the stability of the fundamental harmony.
+\par Section G features a return to random walks beginning and centering  around chord tones, as found earlier in section C. This time, the glissandi are scaled to half-tones rather than quarter-tones. This is intended to emphasize the chord tones by placing them in the context of a twelve-note chromatic space rather than the distorted twenty-four note chromatic scale presented earlier.
+\par Section I is slow and returns to only mapping pitches in the fundamental chord, while the concluding section, Section J, returns to the texture of Section C. This initially transitional character has been transformed from a bridge into a climax, as the trajectory of the piece is suddenly halted. While there is not an intended teleological trajectory within this piece, the motion from ambiguity to clarity with a return to ambiguity feels extremely satisfying to me.
+\section{Future Implications for My Work}
+\par After composing \textit{GUERRERO}, many of my methodologies for composing music with Abjad have changed. Now, I take greater care with the distribution of materials. To do this I am experimenting with the use of Markovian randomness. I have streamlined the process of timespan generation, allowing me to spend more time on other decision-making processes and overall, I have streamlined the file system for my compositions. With these new workflows and new tools for rhythm and pitch generation, I am excited to expand on my computational music in the future.
+\end{doublespace}
+\chapter{Supplemental Illustrations}
+\section{Global Form}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/global_form.pdf}
+
+\section{Invocation}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Invocation.pdf}
+
+ \section{Section A}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_A.pdf}
+
+ \section{Section B}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_B.pdf}
+
+   \section{Section C}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_C.pdf}
+
+   \section{Section D}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_D.pdf}
+
+   \section{Section E}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_E.pdf}
+
+   \section{Section F}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_F.pdf}
+
+   \section{Section G}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_G.pdf}
+
+   \section{Section H}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_H.pdf}
+
+   \section{Section I}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_I.pdf}
+
+   \section{Section J}
+\includepdf[pages=-, pagecommand={}, width=9in,
+  height=12.5in, landscape=true, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Section_J.pdf}
+
+\input{/Users/evansdsg2/spectralism_paper/tex/source_code.lytex}
+
+\chapter{Score}
+\includepdf[pages=-, pagecommand={}, width=7in,
+  height=9.5in, keepaspectratio]{/Users/evansdsg2/spectralism_paper/images/Guerrero_Score.pdf}
+
+\begin{thebibliography}{widest entry}
+\bibitem[1]{baca} Ba\v{c}a, Trevor et al., \textit{Abjad: An Open-Source Software System for Formalized Score Control}, abjad.mbrsi.org, 2015
+\bibitem[2]{besada} Besada, Jose\'e L., \textit{Metamodels in Compositional Practices}, Editions Delatour, 2017
+\bibitem[3]{burkholder} Burkholder, J. Peter et al., \textit{A History of Western Music 9th ed.}, W.W. Norton \& Company, 2014
+\bibitem[4]{carter} Carter, Elliott, \textit{Harmony Book}, Carl Fischer, 2002
+\bibitem[5]{forte} Forte, Alan, \textit{The Structure of Atonal Music}, Yale University Press, 1977
+\bibitem[6]{rhea} Guerrero, Francisco, \textit{Rhea}, Edizioni Suvini Zerboni, 1988
+\bibitem[7]{lee} Lee, Shun-Yang, \textit{Time-Frequency Analysis of the Shepard Tone}, Bard College, 2010
+\bibitem[8]{saxophone} Weiss, Marcus et al., \textit{Die Spieltechnik des Saxophons}, B\"arenreiter, 2010
+\end{thebibliography}
+
+\end{document}
